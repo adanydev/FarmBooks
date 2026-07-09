@@ -70,6 +70,7 @@ public sealed class DevelopmentRunner
             Console.WriteLine("18. List Backups");
             Console.WriteLine("19. Attach Test Document To First Expense");
             Console.WriteLine("20. List Documents For First Expense");
+            Console.WriteLine("21. List Expense DTOs");
             Console.WriteLine();
             Console.WriteLine("0. Exit");
             Console.WriteLine();
@@ -137,6 +138,9 @@ public sealed class DevelopmentRunner
                     break;
                 case "20":
                     await ListDocumentsForFirstExpense();
+                    break;
+                case "21":
+                    await ListExpenseDtos();
                     break;
                 case "0":
                     return;
@@ -528,6 +532,27 @@ public sealed class DevelopmentRunner
                 $"{document.FileName} | " +
                 $"{document.MimeType} | " +
                 $"{document.DocumentBlob.Length} bytes");
+        }
+    }
+
+    private async Task ListExpenseDtos()
+    {
+        var expenses = await _expenseService.GetExpenseListAsync();
+
+        Console.WriteLine("Expense DTOs");
+        Console.WriteLine("------------");
+
+        foreach (var expense in expenses)
+        {
+            Console.WriteLine(
+                $"{expense.ExpenseDate:d} | " +
+                $"{expense.SourceType,-13} | " +
+                $"{expense.BusinessName,-25} | " +
+                $"{expense.Total,10:C} | " +
+                $"{expense.Status,-15} | " +
+                $"Matched: {expense.IsMatched,-5} | " +
+                $"Lines: {expense.LineItemCount} | " +
+                $"Docs: {expense.DocumentCount}");
         }
     }
 }

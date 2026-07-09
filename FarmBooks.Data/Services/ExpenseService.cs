@@ -1,4 +1,5 @@
 using FarmBooks.Core.Models;
+using FarmBooks.Core.DTOs.Expenses;
 using FarmBooks.Data.Services;
 using FarmBooks.Data.Repositories;
 
@@ -8,13 +9,22 @@ public sealed class ExpenseService
 {
     private readonly ExpenseRepository _expenses;
     private readonly ExpenseLineItemRepository _lineItems;
+    private readonly ExpenseMatchRepository _matches;
+    private readonly ExpenseDocumentRepository _documents;
+    private readonly AccountingCodeRepository _codes;
 
     public ExpenseService(
         ExpenseRepository expenses,
-        ExpenseLineItemRepository lineItems)
+        ExpenseLineItemRepository lineItems,
+        ExpenseMatchRepository matches,
+        ExpenseDocumentRepository documents,
+        AccountingCodeRepository codes)
     {
         _expenses = expenses;
         _lineItems = lineItems;
+        _matches = matches;
+        _documents = documents;
+        _codes = codes;
     }
 
     public async Task<string> CreateExpenseAsync(
@@ -111,5 +121,95 @@ public sealed class ExpenseService
     public Task RestoreExpenseAsync(string expenseId)
     {
         return _expenses.RestoreAsync(expenseId);
+    }
+
+    public async Task<IReadOnlyList<ExpenseListItemDto>> GetExpenseListAsync()
+    {
+        var expenses = await _expenses.ListAsync();
+        var codes = await _codes.ListActiveAsync();
+
+        var result = new List<ExpenseListItemDto>();
+
+        foreach (var expense in expenses)
+        {
+            var lineItems = await _lineItems.ListForExpenseAsync(expense.ExpenseId);
+            var status = ExpenseStatusCalculator.Calculate(expense, lineItems);
+            var isMatched = await _matches.IsExpenseMatchedAsync(expense.ExpenseId);
+            var documentCount = await _documents.CountForExpenseAsync(expense.ExpenseId);
+
+            result.Add(new ExpenseListItemDto
+            {
+                ExpenseId = expense.ExpenseId,
+                ExpenseDate = expense.ExpenseDate,
+                PaidDate = expense.PaidDate,
+                SourceType = expense.SourceType.ToString(),
+                DocumentNumber = expense.DocumentNumber,
+                BusinessName = expense.BusinessName,
+                Description = expense.Description,
+                Total = expense.Total,
+                Status = status.ToString(),
+                IsMatched = isMatched,
+                LineItemCount = lineItems.Count,
+                DocumentCount = documentCount
+            });
+        }
+
+        return result;
+    }
+
+    public async Task<ExpenseDetailsDto?> GetExpenseDetailsAsync(string expenseId)
+    {
+        var expense = await _expenses.GetAsync(expenseId);
+
+        if (expense is null)
+            return null;
+
+        var lineItems = await _lineItems.ListForExpenseAsync(expenseId);
+        var documents = await _documents.ListForExpenseAsync(expenseId);
+        var codes = await _codes.ListActiveAsync();
+        var status = ExpenseStatusCalculator.Calculate(expense, lineItems);
+        var isMatched = await _matches.IsExpenseMatchedAsync(expenseId);
+
+        return new ExpenseDetailsDto
+        {
+            ExpenseId = expense.ExpenseId,
+            ExpenseDate = expense.ExpenseDate,
+            PaidDate = expense.PaidDate,
+            SourceType = expense.SourceType.ToString(),
+            DocumentNumber = expense.DocumentNumber,
+            BusinessName = expense.BusinessName,
+            Description = expense.Description,
+            Total = expense.Total,
+            VATC = expense.VATC,
+            VATS = expense.VATS,
+            Notes = expense.Notes,
+            Status = status.ToString(),
+            IsMatched = isMatched,
+
+            LineItems = lineItems.Select(x =>
+            {
+                var code = codes.FirstOrDefault(c => c.CodeId == x.CodeId);
+
+                return new ExpenseLineItemDto
+                {
+                    ExpenseLineItemId = x.ExpenseLineItemId,
+                    CodeId = x.CodeId,
+                    Code = code?.Code,
+                    CodeName = code?.Name,
+                    Description = x.Description,
+                    Total = x.Total,
+                    VATTreatment = x.VATTreatment
+                };
+            }).ToList(),
+
+            Documents = documents.Select(x => new ExpenseDocumentDto
+            {
+                ExpenseDocumentId = x.ExpenseDocumentId,
+                FileName = x.FileName,
+                MimeType = x.MimeType,
+                DocumentType = x.DocumentType,
+                UploadedAt = x.UploadedAt
+            }).ToList()
+        };
     }
 }

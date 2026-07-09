@@ -85,4 +85,16 @@ public sealed class ExpenseDocumentRepository
             Now = DateTime.UtcNow
         });
     }
+
+    public async Task<int> CountForExpenseAsync(string expenseId)
+    {
+        using var connection = _db.CreateConnection();
+
+        return await connection.ExecuteScalarAsync<int>("""
+        SELECT COUNT(*)
+        FROM ExpenseDocuments
+        WHERE ExpenseId = @ExpenseId
+        AND DeletedAt IS NULL;
+        """, new { ExpenseId = expenseId });
+    }
 }

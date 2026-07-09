@@ -77,4 +77,9 @@ public sealed class ExpenseDocumentService
             _ => "application/octet-stream"
         };
     }
+
+    public Task<int> CountForExpenseAsync(string expenseId)
+    {
+        return _documents.CountForExpenseAsync(expenseId);
+    }
 }

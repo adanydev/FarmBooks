@@ -27,7 +27,7 @@ var backupRepository = new BackupRepository(db);
 var expenseDocumentRepository = new ExpenseDocumentRepository(db);
 
 var accountingCodeService = new AccountingCodeService(accountingCodeRepository);
-var expenseService = new ExpenseService(expenseRepository, expenseLineItemRepository);
+var expenseService = new ExpenseService(expenseRepository, expenseLineItemRepository, expenseMatchRepository, expenseDocumentRepository, accountingCodeRepository);
 var expenseLineItemService = new ExpenseLineItemService(expenseLineItemRepository);
 var dashboardService = new DashboardService(dashboardRepository);
 var bankService = new BankService(bankRepository);
