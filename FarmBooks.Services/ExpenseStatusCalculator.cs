@@ -1,6 +1,6 @@
 using FarmBooks.Core.Models;
 
-namespace FarmBooks.Data.Services;
+namespace FarmBooks.Services;
 
 public enum ExpenseStatus
 {

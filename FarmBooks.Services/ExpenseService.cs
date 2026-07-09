@@ -1,9 +1,9 @@
 using FarmBooks.Core.Models;
 using FarmBooks.Core.DTOs.Expenses;
-using FarmBooks.Data.Services;
+using FarmBooks.Services;
 using FarmBooks.Data.Repositories;
 
-namespace FarmBooks.Data.Services;
+namespace FarmBooks.Services;
 
 public sealed class ExpenseService
 {

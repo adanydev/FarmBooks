@@ -2,4 +2,5 @@
   <Project Path="FarmBooks.Core/FarmBooks.Core.csproj" />
   <Project Path="FarmBooks.Data/FarmBooks.Data.csproj" />
   <Project Path="FarmBooks.DevRunner/FarmBooks.DevRunner.csproj" />
+  <Project Path="FarmBooks.Services/FarmBooks.Services.csproj" />
 </Solution>

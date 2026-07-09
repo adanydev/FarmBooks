@@ -1,6 +1,6 @@
 using FarmBooks.Data.Database;
 using FarmBooks.Data.Repositories;
-using FarmBooks.Data.Services;
+using FarmBooks.Services;
 using FarmBooks.Core.Models;
 
 namespace FarmBooks.DevRunner;
@@ -75,6 +75,10 @@ public sealed class DevelopmentRunner
             Console.WriteLine("20. List Documents For First Expense");
             Console.WriteLine("21. List Expense DTOs");
             Console.WriteLine("22. List Audit Log");
+            Console.WriteLine("23. List All Accounting Codes");
+            Console.WriteLine("24. Update First Accounting Code");
+            Console.WriteLine("25. Disable First Accounting Code");
+            Console.WriteLine("26. Reactivate First Accounting Code");
             Console.WriteLine();
             Console.WriteLine("0. Exit");
             Console.WriteLine();
@@ -148,6 +152,18 @@ public sealed class DevelopmentRunner
                     break;
                 case "22":
                     await ListAuditLog();
+                    break;
+                case "23":
+                    await ListAllAccountingCodes();
+                    break;
+                case "24":
+                    await UpdateFirstAccountingCode();
+                    break;
+                case "25":
+                    await DisableFirstAccountingCode();
+                    break;
+                case "26":
+                    await ReactivateFirstAccountingCode();
                     break;
                 case "0":
                     return;
@@ -578,5 +594,74 @@ public sealed class DevelopmentRunner
                 $"{entry.Action} | " +
                 $"{entry.EntityId}");
         }
+    }
+
+    private async Task ListAllAccountingCodes()
+    {
+        var codes = await _codeService.ListAllCodesAsync();
+
+        Console.WriteLine("Accounting Codes");
+        Console.WriteLine("----------------");
+
+        foreach (var code in codes)
+        {
+            var status = code.IsActive ? "Active" : "Inactive";
+
+            Console.WriteLine(
+                $"{code.Code,-8} | {code.Name,-30} | {status}");
+        }
+    }
+
+    private async Task UpdateFirstAccountingCode()
+    {
+        var codes = await _codeService.ListAllCodesAsync();
+        var code = codes.FirstOrDefault();
+
+        if (code is null)
+        {
+            Console.WriteLine("No accounting codes found.");
+            return;
+        }
+
+        await _codeService.UpdateCodeAsync(
+            code.CodeId,
+            code.Code,
+            code.Name + " UPDATED",
+            code.Description,
+            code.IsActive);
+
+        Console.WriteLine($"Updated code {code.Code}.");
+    }
+
+    private async Task DisableFirstAccountingCode()
+    {
+        var codes = await _codeService.ListAllCodesAsync();
+        var code = codes.FirstOrDefault(x => x.IsActive);
+
+        if (code is null)
+        {
+            Console.WriteLine("No active accounting codes found.");
+            return;
+        }
+
+        await _codeService.DisableCodeAsync(code.CodeId);
+
+        Console.WriteLine($"Disabled code {code.Code}.");
+    }
+
+    private async Task ReactivateFirstAccountingCode()
+    {
+        var codes = await _codeService.ListAllCodesAsync();
+        var code = codes.FirstOrDefault(x => !x.IsActive);
+
+        if (code is null)
+        {
+            Console.WriteLine("No inactive accounting codes found.");
+            return;
+        }
+
+        await _codeService.ReactivateCodeAsync(code.CodeId);
+
+        Console.WriteLine($"Reactivated code {code.Code}.");
     }
 }

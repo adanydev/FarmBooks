@@ -1,8 +1,8 @@
 using FarmBooks.Core.DTOs;
-using FarmBooks.Data.Services;
+using FarmBooks.Services;
 using FarmBooks.Data.Repositories;
 
-namespace FarmBooks.Data.Services;
+namespace FarmBooks.Services;
 
 public sealed class DashboardService
 {

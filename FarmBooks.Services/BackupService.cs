@@ -1,7 +1,7 @@
 using FarmBooks.Core.Models;
 using FarmBooks.Data.Repositories;
 
-namespace FarmBooks.Data.Services;
+namespace FarmBooks.Services;
 
 public sealed class BackupService
 {

@@ -1,7 +1,7 @@
 ﻿using FarmBooks.DevRunner;
 using FarmBooks.Data.Database;
 using FarmBooks.Data.Repositories;
-using FarmBooks.Data.Services;
+using FarmBooks.Services;
 
 var databasePath = Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -29,7 +29,7 @@ var auditRepository = new AuditRepository(db);
 
 
 var auditService = new AuditService(auditRepository);
-var accountingCodeService = new AccountingCodeService(accountingCodeRepository);
+var accountingCodeService = new AccountingCodeService(accountingCodeRepository, auditService);
 var expenseService = new ExpenseService(expenseRepository, expenseLineItemRepository, expenseMatchRepository, expenseDocumentRepository, accountingCodeRepository, auditService);
 var expenseLineItemService = new ExpenseLineItemService(expenseLineItemRepository);
 var dashboardService = new DashboardService(dashboardRepository);
