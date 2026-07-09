@@ -10,11 +10,11 @@ public sealed class BackupService
     private readonly SettingsService _settingsService;
 
     public BackupService(
-        string databasePath,
+        DatabaseOptions databaseOptions,
         BackupRepository backupRepository,
         SettingsService settingsService)
     {
-        _databasePath = databasePath;
+        _databasePath = databaseOptions.DatabasePath;
         _backupRepository = backupRepository;
         _settingsService = settingsService;
     }

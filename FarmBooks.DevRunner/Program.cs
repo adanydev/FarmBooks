@@ -2,6 +2,7 @@
 using FarmBooks.Data.Database;
 using FarmBooks.Data.Repositories;
 using FarmBooks.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 var databasePath = Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
@@ -10,49 +11,48 @@ var databasePath = Path.Combine(
 
 Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
 
-var db = new DbConnectionFactory(databasePath);
+var services = new ServiceCollection();
 
-var schema = new SchemaInitializer(db);
+services.AddSingleton(new DbConnectionFactory(databasePath));
+services.AddSingleton(new FarmBooks.Core.Models.DatabaseOptions
+{
+    DatabasePath = databasePath
+});
+
+services.AddTransient<SchemaInitializer>();
+
+// Repositories
+services.AddTransient<AccountingCodeRepository>();
+services.AddTransient<AuditRepository>();
+services.AddTransient<BackupRepository>();
+services.AddTransient<BankRepository>();
+services.AddTransient<DashboardRepository>();
+services.AddTransient<ExpenseDocumentRepository>();
+services.AddTransient<ExpenseLineItemRepository>();
+services.AddTransient<ExpenseMatchRepository>();
+services.AddTransient<ExpenseRepository>();
+services.AddTransient<ImportRepository>();
+services.AddTransient<SettingsRepository>();
+
+// Services
+services.AddTransient<AccountingCodeService>();
+services.AddTransient<AuditService>();
+services.AddTransient<BackupService>();
+services.AddTransient<BankService>();
+services.AddTransient<DashboardService>();
+services.AddTransient<ExpenseDocumentService>();
+services.AddTransient<ExpenseLineItemService>();
+services.AddTransient<ExpenseMatchingService>();
+services.AddTransient<ExpenseService>();
+services.AddTransient<ImportService>();
+services.AddTransient<SettingsService>();
+
+services.AddTransient<DevelopmentRunner>();
+
+var serviceProvider = services.BuildServiceProvider();
+
+var schema = serviceProvider.GetRequiredService<SchemaInitializer>();
 await schema.InitializeAsync();
 
-var accountingCodeRepository = new AccountingCodeRepository(db);
-var expenseRepository = new ExpenseRepository(db);
-var expenseLineItemRepository = new ExpenseLineItemRepository(db);
-var dashboardRepository = new DashboardRepository(db);
-var bankRepository = new BankRepository(db);
-var expenseMatchRepository = new ExpenseMatchRepository(db);
-var importRepository = new ImportRepository(db);
-var settingsRepository = new SettingsRepository(db);
-var backupRepository = new BackupRepository(db);
-var expenseDocumentRepository = new ExpenseDocumentRepository(db);
-var auditRepository = new AuditRepository(db);
-
-
-var auditService = new AuditService(auditRepository);
-var accountingCodeService = new AccountingCodeService(accountingCodeRepository, auditService);
-var expenseService = new ExpenseService(expenseRepository, expenseLineItemRepository, expenseMatchRepository, expenseDocumentRepository, accountingCodeRepository, auditService);
-var expenseLineItemService = new ExpenseLineItemService(expenseLineItemRepository);
-var dashboardService = new DashboardService(dashboardRepository);
-var bankService = new BankService(bankRepository);
-var expenseMatchingService = new ExpenseMatchingService(expenseMatchRepository);
-var importService = new ImportService(importRepository);
-var settingsService = new SettingsService(settingsRepository);
-var backupService = new BackupService(databasePath, backupRepository, settingsService);
-var expenseDocumentService = new ExpenseDocumentService(
-    expenseDocumentRepository,
-    expenseRepository);
-
-var runner = new DevelopmentRunner(
-    expenseService,
-    expenseLineItemService,
-    accountingCodeService,
-    dashboardService,
-    bankService,
-    expenseMatchingService,
-    importService,
-    settingsService,
-    backupService,
-    expenseDocumentService,
-    auditService);
-
+var runner = serviceProvider.GetRequiredService<DevelopmentRunner>();
 await runner.RunAsync();
