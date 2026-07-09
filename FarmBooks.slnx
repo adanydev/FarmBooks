@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="FarmBooks.Core/FarmBooks.Core.csproj" />
+  <Project Path="FarmBooks.Data/FarmBooks.Data.csproj" />
+  <Project Path="FarmBooks.DevRunner/FarmBooks.DevRunner.csproj" />
+</Solution>
