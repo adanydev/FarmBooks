@@ -12,19 +12,22 @@ public sealed class ExpenseService
     private readonly ExpenseMatchRepository _matches;
     private readonly ExpenseDocumentRepository _documents;
     private readonly AccountingCodeRepository _codes;
+    private readonly AuditService _auditService;
 
     public ExpenseService(
         ExpenseRepository expenses,
         ExpenseLineItemRepository lineItems,
         ExpenseMatchRepository matches,
         ExpenseDocumentRepository documents,
-        AccountingCodeRepository codes)
+        AccountingCodeRepository codes, 
+        AuditService auditService)
     {
         _expenses = expenses;
         _lineItems = lineItems;
         _matches = matches;
         _documents = documents;
         _codes = codes;
+        _auditService = auditService;
     }
 
     public async Task<string> CreateExpenseAsync(
@@ -61,6 +64,8 @@ public sealed class ExpenseService
         };
 
         await _expenses.CreateAsync(expense);
+
+        await _auditService.WriteAsync("Expense", expense.ExpenseId, "Created", null, expense);
 
         return expense.ExpenseId;
     }
@@ -101,6 +106,24 @@ public sealed class ExpenseService
         if (total < 0)
             throw new InvalidOperationException("Expense total cannot be negative.");
 
+        var oldExpense = new Expense
+        {
+            ExpenseId = expense.ExpenseId,
+            ExpenseDate = expense.ExpenseDate,
+            PaidDate = expense.PaidDate,
+            SourceType = expense.SourceType,
+            DocumentNumber = expense.DocumentNumber,
+            BusinessName = expense.BusinessName,
+            Description = expense.Description,
+            Total = expense.Total,
+            VATC = expense.VATC,
+            VATS = expense.VATS,
+            Notes = expense.Notes,
+            CreatedAt = expense.CreatedAt,
+            UpdatedAt = expense.UpdatedAt,
+            DeletedAt = expense.DeletedAt
+        };
+
         expense.ExpenseDate = expenseDate;
         expense.PaidDate = paidDate;
         expense.SourceType = sourceType;
@@ -111,16 +134,39 @@ public sealed class ExpenseService
         expense.Notes = notes;
 
         await _expenses.UpdateAsync(expense);
+
+        await _auditService.WriteAsync(
+            "Expense",
+            expense.ExpenseId,
+            "Updated",
+            oldExpense,
+            expense);
     }
 
-    public Task DeleteExpenseAsync(string expenseId)
+    public async Task DeleteExpenseAsync(string expenseId)
     {
-        return _expenses.SoftDeleteAsync(expenseId);
+        var expense = await _expenses.GetAsync(expenseId);
+
+        await _expenses.SoftDeleteAsync(expenseId);
+
+        await _auditService.WriteAsync(
+            "Expense",
+            expenseId,
+            "Deleted",
+            expense,
+            null);
     }
 
-    public Task RestoreExpenseAsync(string expenseId)
+    public async Task RestoreExpenseAsync(string expenseId)
     {
-        return _expenses.RestoreAsync(expenseId);
+        await _expenses.RestoreAsync(expenseId);
+
+        await _auditService.WriteAsync(
+            "Expense",
+            expenseId,
+            "Restored",
+            null,
+            new { ExpenseId = expenseId });
     }
 
     public async Task<IReadOnlyList<ExpenseListItemDto>> GetExpenseListAsync()

@@ -17,6 +17,7 @@ public sealed class DevelopmentRunner
     private readonly SettingsService _settingsService;
     private readonly BackupService _backupService;
     private readonly ExpenseDocumentService _expenseDocumentService;
+    private readonly AuditService _auditService;
 
     public DevelopmentRunner(
         ExpenseService expenseService,
@@ -28,7 +29,8 @@ public sealed class DevelopmentRunner
         ImportService importService,
         SettingsService settingsService,
         BackupService backupService,
-        ExpenseDocumentService expenseDocumentService)
+        ExpenseDocumentService expenseDocumentService,
+        AuditService auditService)
     {
         _expenseService = expenseService;
         _lineItemService = lineItemService;
@@ -40,6 +42,7 @@ public sealed class DevelopmentRunner
         _settingsService = settingsService;
         _backupService = backupService;
         _expenseDocumentService = expenseDocumentService;
+        _auditService = auditService;
     }
 
     public async Task RunAsync()
@@ -71,6 +74,7 @@ public sealed class DevelopmentRunner
             Console.WriteLine("19. Attach Test Document To First Expense");
             Console.WriteLine("20. List Documents For First Expense");
             Console.WriteLine("21. List Expense DTOs");
+            Console.WriteLine("22. List Audit Log");
             Console.WriteLine();
             Console.WriteLine("0. Exit");
             Console.WriteLine();
@@ -141,6 +145,9 @@ public sealed class DevelopmentRunner
                     break;
                 case "21":
                     await ListExpenseDtos();
+                    break;
+                case "22":
+                    await ListAuditLog();
                     break;
                 case "0":
                     return;
@@ -553,6 +560,23 @@ public sealed class DevelopmentRunner
                 $"Matched: {expense.IsMatched,-5} | " +
                 $"Lines: {expense.LineItemCount} | " +
                 $"Docs: {expense.DocumentCount}");
+        }
+    }
+
+    private async Task ListAuditLog()
+    {
+        var entries = await _auditService.ListRecentAsync();
+
+        Console.WriteLine("Audit Log");
+        Console.WriteLine("---------");
+
+        foreach (var entry in entries)
+        {
+            Console.WriteLine(
+                $"{entry.Timestamp:g} | " +
+                $"{entry.EntityType} | " +
+                $"{entry.Action} | " +
+                $"{entry.EntityId}");
         }
     }
 }

@@ -25,9 +25,12 @@ var importRepository = new ImportRepository(db);
 var settingsRepository = new SettingsRepository(db);
 var backupRepository = new BackupRepository(db);
 var expenseDocumentRepository = new ExpenseDocumentRepository(db);
+var auditRepository = new AuditRepository(db);
 
+
+var auditService = new AuditService(auditRepository);
 var accountingCodeService = new AccountingCodeService(accountingCodeRepository);
-var expenseService = new ExpenseService(expenseRepository, expenseLineItemRepository, expenseMatchRepository, expenseDocumentRepository, accountingCodeRepository);
+var expenseService = new ExpenseService(expenseRepository, expenseLineItemRepository, expenseMatchRepository, expenseDocumentRepository, accountingCodeRepository, auditService);
 var expenseLineItemService = new ExpenseLineItemService(expenseLineItemRepository);
 var dashboardService = new DashboardService(dashboardRepository);
 var bankService = new BankService(bankRepository);
@@ -49,6 +52,7 @@ var runner = new DevelopmentRunner(
     importService,
     settingsService,
     backupService,
-    expenseDocumentService);
+    expenseDocumentService,
+    auditService);
 
 await runner.RunAsync();

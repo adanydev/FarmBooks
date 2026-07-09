@@ -182,6 +182,16 @@ public sealed class SchemaInitializer
 
             FOREIGN KEY (ExpenseId) REFERENCES Expenses(ExpenseId)
         );
+
+        CREATE TABLE IF NOT EXISTS AuditLogEntries (
+            AuditLogEntryId TEXT PRIMARY KEY,
+            EntityType TEXT NOT NULL,
+            EntityId TEXT NOT NULL,
+            Action TEXT NOT NULL,
+            Timestamp TEXT NOT NULL,
+            OldValuesJson TEXT NULL,
+            NewValuesJson TEXT NULL
+        );
         """);
     }
 }
