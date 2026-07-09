@@ -5,7 +5,7 @@ using FarmBooks.Data.Repositories;
 
 namespace FarmBooks.Services;
 
-public sealed class ExpenseService
+public sealed class ExpenseService : IExpenseService
 {
     private readonly ExpenseRepository _expenses;
     private readonly ExpenseLineItemRepository _lineItems;

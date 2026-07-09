@@ -3,7 +3,7 @@ using FarmBooks.Data.Repositories;
 
 namespace FarmBooks.Services;
 
-public sealed class AccountingCodeService
+public sealed class AccountingCodeService : IAccountingCodeService
 {
     private readonly AccountingCodeRepository _codes;
     private readonly AuditService _auditService;
