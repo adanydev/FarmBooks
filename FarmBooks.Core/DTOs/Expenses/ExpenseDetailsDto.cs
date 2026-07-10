@@ -18,4 +18,6 @@ public sealed class ExpenseDetailsDto
 
     public List<ExpenseLineItemDto> LineItems { get; set; } = [];
     public List<ExpenseDocumentDto> Documents { get; set; } = [];
+
+    public ExpenseWorkflowStatusDto WorkflowStatus { get; set; } = new();
 }

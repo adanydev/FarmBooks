@@ -16,6 +16,11 @@ public sealed class ExpenseListRowViewModel : ViewModelBase
     private bool _matched;
     private int _lineItemCount;
     private int _documentCount;
+    private bool _isVatReady;
+    private bool _isTaxReady;
+
+    private int _vatIssueCount;
+    private int _taxIssueCount;
 
     public string ExpenseId
     {
@@ -87,5 +92,29 @@ public sealed class ExpenseListRowViewModel : ViewModelBase
     {
         get => _documentCount;
         set => SetProperty(ref _documentCount, value);
+    }
+
+    public bool IsVatReady
+    {
+        get => _isVatReady;
+        set => SetProperty(ref _isVatReady, value);
+    }
+
+    public bool IsTaxReady
+    {
+        get => _isTaxReady;
+        set => SetProperty(ref _isTaxReady, value);
+    }
+
+    public int VatIssueCount
+    {
+        get => _vatIssueCount;
+        set => SetProperty(ref _vatIssueCount, value);
+    }
+
+    public int TaxIssueCount
+    {
+        get => _taxIssueCount;
+        set => SetProperty(ref _taxIssueCount, value);
     }
 }

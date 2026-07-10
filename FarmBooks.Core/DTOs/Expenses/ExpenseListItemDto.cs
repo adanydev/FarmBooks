@@ -14,4 +14,8 @@ public sealed class ExpenseListItemDto
     public bool IsMatched { get; set; }
     public int LineItemCount { get; set; }
     public int DocumentCount { get; set; }
+    public bool IsVatReady { get; set; }
+    public bool IsTaxReady { get; set; }
+    public int VatIssueCount { get; set; }
+    public int TaxIssueCount { get; set; }
 }

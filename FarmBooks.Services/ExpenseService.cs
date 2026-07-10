@@ -1,7 +1,7 @@
-using FarmBooks.Core.Models;
 using FarmBooks.Core.DTOs.Expenses;
-using FarmBooks.Services;
+using FarmBooks.Core.Models;
 using FarmBooks.Data.Repositories;
+using FarmBooks.Services;
 
 namespace FarmBooks.Services;
 
@@ -19,8 +19,9 @@ public sealed class ExpenseService : IExpenseService
         ExpenseLineItemRepository lineItems,
         ExpenseMatchRepository matches,
         ExpenseDocumentRepository documents,
-        AccountingCodeRepository codes, 
-        AuditService auditService)
+        AccountingCodeRepository codes,
+        AuditService auditService
+    )
     {
         _expenses = expenses;
         _lineItems = lineItems;
@@ -38,7 +39,8 @@ public sealed class ExpenseService : IExpenseService
         string? businessName,
         string? description,
         decimal total,
-        string? notes)
+        string? notes
+    )
     {
         if (expenseDate == default)
             throw new InvalidOperationException("Expense date is required.");
@@ -60,7 +62,7 @@ public sealed class ExpenseService : IExpenseService
             Total = total,
             Notes = notes,
             CreatedAt = now,
-            UpdatedAt = now
+            UpdatedAt = now,
         };
 
         await _expenses.CreateAsync(expense);
@@ -96,7 +98,8 @@ public sealed class ExpenseService : IExpenseService
         string? businessName,
         string? description,
         decimal total,
-        string? notes)
+        string? notes
+    )
     {
         var expense = await _expenses.GetAsync(expenseId);
 
@@ -121,7 +124,7 @@ public sealed class ExpenseService : IExpenseService
             Notes = expense.Notes,
             CreatedAt = expense.CreatedAt,
             UpdatedAt = expense.UpdatedAt,
-            DeletedAt = expense.DeletedAt
+            DeletedAt = expense.DeletedAt,
         };
 
         expense.ExpenseDate = expenseDate;
@@ -140,7 +143,8 @@ public sealed class ExpenseService : IExpenseService
             expense.ExpenseId,
             "Updated",
             oldExpense,
-            expense);
+            expense
+        );
     }
 
     public async Task DeleteExpenseAsync(string expenseId)
@@ -149,12 +153,7 @@ public sealed class ExpenseService : IExpenseService
 
         await _expenses.SoftDeleteAsync(expenseId);
 
-        await _auditService.WriteAsync(
-            "Expense",
-            expenseId,
-            "Deleted",
-            expense,
-            null);
+        await _auditService.WriteAsync("Expense", expenseId, "Deleted", expense, null);
     }
 
     public async Task RestoreExpenseAsync(string expenseId)
@@ -166,7 +165,8 @@ public sealed class ExpenseService : IExpenseService
             expenseId,
             "Restored",
             null,
-            new { ExpenseId = expenseId });
+            new { ExpenseId = expenseId }
+        );
     }
 
     public async Task<IReadOnlyList<ExpenseListItemDto>> GetExpenseListAsync()
@@ -179,25 +179,32 @@ public sealed class ExpenseService : IExpenseService
         foreach (var expense in expenses)
         {
             var lineItems = await _lineItems.ListForExpenseAsync(expense.ExpenseId);
+            var workflow = ExpenseWorkflowStatusCalculator.Calculate(expense, lineItems);
             var status = ExpenseStatusCalculator.Calculate(expense, lineItems);
             var isMatched = await _matches.IsExpenseMatchedAsync(expense.ExpenseId);
             var documentCount = await _documents.CountForExpenseAsync(expense.ExpenseId);
 
-            result.Add(new ExpenseListItemDto
-            {
-                ExpenseId = expense.ExpenseId,
-                ExpenseDate = expense.ExpenseDate,
-                PaidDate = expense.PaidDate,
-                SourceType = expense.SourceType.ToString(),
-                DocumentNumber = expense.DocumentNumber,
-                BusinessName = expense.BusinessName,
-                Description = expense.Description,
-                Total = expense.Total,
-                Status = status.ToString(),
-                IsMatched = isMatched,
-                LineItemCount = lineItems.Count,
-                DocumentCount = documentCount
-            });
+            result.Add(
+                new ExpenseListItemDto
+                {
+                    ExpenseId = expense.ExpenseId,
+                    ExpenseDate = expense.ExpenseDate,
+                    PaidDate = expense.PaidDate,
+                    SourceType = expense.SourceType.ToString(),
+                    DocumentNumber = expense.DocumentNumber,
+                    BusinessName = expense.BusinessName,
+                    Description = expense.Description,
+                    Total = expense.Total,
+                    Status = status.ToString(),
+                    IsVatReady = workflow.IsVatReady,
+                    IsTaxReady = workflow.IsTaxReady,
+                    VatIssueCount = workflow.VatIssues.Count,
+                    TaxIssueCount = workflow.TaxIssues.Count,
+                    IsMatched = isMatched,
+                    LineItemCount = lineItems.Count,
+                    DocumentCount = documentCount,
+                }
+            );
         }
 
         return result;
@@ -211,6 +218,7 @@ public sealed class ExpenseService : IExpenseService
             return null;
 
         var lineItems = await _lineItems.ListForExpenseAsync(expenseId);
+        var workflow = ExpenseWorkflowStatusCalculator.Calculate(expense, lineItems);
         var documents = await _documents.ListForExpenseAsync(expenseId);
         var codes = await _codes.ListActiveAsync();
         var status = ExpenseStatusCalculator.Calculate(expense, lineItems);
@@ -230,32 +238,37 @@ public sealed class ExpenseService : IExpenseService
             VATS = expense.VATS,
             Notes = expense.Notes,
             Status = status.ToString(),
+            WorkflowStatus = workflow,
             IsMatched = isMatched,
 
-            LineItems = lineItems.Select(x =>
-            {
-                var code = codes.FirstOrDefault(c => c.CodeId == x.CodeId);
-
-                return new ExpenseLineItemDto
+            LineItems = lineItems
+                .Select(x =>
                 {
-                    ExpenseLineItemId = x.ExpenseLineItemId,
-                    CodeId = x.CodeId,
-                    Code = code?.Code,
-                    CodeName = code?.Name,
-                    Description = x.Description,
-                    Total = x.Total,
-                    VATTreatment = x.VATTreatment
-                };
-            }).ToList(),
+                    var code = codes.FirstOrDefault(c => c.CodeId == x.CodeId);
 
-            Documents = documents.Select(x => new ExpenseDocumentDto
-            {
-                ExpenseDocumentId = x.ExpenseDocumentId,
-                FileName = x.FileName,
-                MimeType = x.MimeType,
-                DocumentType = x.DocumentType,
-                UploadedAt = x.UploadedAt
-            }).ToList()
+                    return new ExpenseLineItemDto
+                    {
+                        ExpenseLineItemId = x.ExpenseLineItemId,
+                        CodeId = x.CodeId,
+                        Code = code?.Code,
+                        CodeName = code?.Name,
+                        Description = x.Description,
+                        Total = x.Total,
+                        VATTreatment = x.VATTreatment,
+                    };
+                })
+                .ToList(),
+
+            Documents = documents
+                .Select(x => new ExpenseDocumentDto
+                {
+                    ExpenseDocumentId = x.ExpenseDocumentId,
+                    FileName = x.FileName,
+                    MimeType = x.MimeType,
+                    DocumentType = x.DocumentType,
+                    UploadedAt = x.UploadedAt,
+                })
+                .ToList(),
         };
     }
 }

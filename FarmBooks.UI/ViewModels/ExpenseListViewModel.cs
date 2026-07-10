@@ -105,6 +105,10 @@ public sealed class ExpenseListViewModel : ViewModelBase
             Matched = expense.IsMatched,
             LineItemCount = expense.LineItemCount,
             DocumentCount = expense.DocumentCount,
+            IsVatReady = expense.IsVatReady,
+            IsTaxReady = expense.IsTaxReady,
+            VatIssueCount = expense.VatIssueCount,
+            TaxIssueCount = expense.TaxIssueCount,
         };
     }
 
