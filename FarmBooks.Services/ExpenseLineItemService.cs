@@ -3,7 +3,7 @@ using FarmBooks.Data.Repositories;
 
 namespace FarmBooks.Services;
 
-public sealed class ExpenseLineItemService
+public sealed class ExpenseLineItemService : IExpenseLineItemService
 {
     private readonly ExpenseLineItemRepository _lineItems;
 
@@ -17,13 +17,18 @@ public sealed class ExpenseLineItemService
         string? codeId,
         string? description,
         decimal total,
-        string? vatTreatment = null)
+        string? vatTreatment = null
+    )
     {
         if (string.IsNullOrWhiteSpace(expenseId))
+        {
             throw new InvalidOperationException("Expense ID is required.");
+        }
 
         if (total < 0)
+        {
             throw new InvalidOperationException("Line item total cannot be negative.");
+        }
 
         var now = DateTime.UtcNow;
 
@@ -31,12 +36,12 @@ public sealed class ExpenseLineItemService
         {
             ExpenseLineItemId = Guid.NewGuid().ToString(),
             ExpenseId = expenseId,
-            CodeId = codeId,
-            Description = description,
+            CodeId = string.IsNullOrWhiteSpace(codeId) ? null : codeId,
+            Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             Total = total,
-            VATTreatment = vatTreatment,
+            VATTreatment = string.IsNullOrWhiteSpace(vatTreatment) ? null : vatTreatment,
             CreatedAt = now,
-            UpdatedAt = now
+            UpdatedAt = now,
         };
 
         await _lineItems.AddAsync(item);
@@ -44,13 +49,44 @@ public sealed class ExpenseLineItemService
         return item.ExpenseLineItemId;
     }
 
-    public Task<IReadOnlyList<ExpenseLineItem>> ListForExpenseAsync(string expenseId)
+    public async Task<IReadOnlyList<ExpenseLineItem>> ListForExpenseAsync(string expenseId)
     {
-        return _lineItems.ListForExpenseAsync(expenseId);
+        return await _lineItems.ListForExpenseAsync(expenseId);
     }
 
     public Task DeleteLineItemAsync(string expenseLineItemId)
     {
         return _lineItems.SoftDeleteAsync(expenseLineItemId);
+    }
+
+    public async Task UpdateLineItemAsync(
+        string expenseLineItemId,
+        string? codeId,
+        string? description,
+        decimal total,
+        string? vatTreatment = null
+    )
+    {
+        if (string.IsNullOrWhiteSpace(expenseLineItemId))
+        {
+            throw new InvalidOperationException("Expense line item ID is required.");
+        }
+
+        if (total < 0)
+        {
+            throw new InvalidOperationException("Line item total cannot be negative.");
+        }
+
+        var item = new ExpenseLineItem
+        {
+            ExpenseLineItemId = expenseLineItemId,
+            CodeId = string.IsNullOrWhiteSpace(codeId) ? null : codeId,
+            Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
+            Total = total,
+            VATTreatment = string.IsNullOrWhiteSpace(vatTreatment) ? null : vatTreatment,
+            UpdatedAt = DateTime.UtcNow,
+        };
+
+        await _lineItems.UpdateAsync(item);
     }
 }

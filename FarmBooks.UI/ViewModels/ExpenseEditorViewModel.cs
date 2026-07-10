@@ -12,11 +12,16 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
     private readonly IExpenseService _expenseService;
     private ExpenseDetailsViewModel? _details;
     private string _message = "";
-    public event EventHandler<ExpenseDetailsViewModel>? ExpenseSaved;
+    public event EventHandler<string>? ExpenseSaved;
 
-    public ExpenseEditorViewModel(IExpenseService expenseService)
+    public ExpenseEditorViewModel(
+        IExpenseService expenseService,
+        ExpenseLineItemsViewModel lineItems
+    )
     {
         _expenseService = expenseService;
+        LineItems = lineItems;
+
         SaveCommand = new AsyncRelayCommand(SaveAsync);
     }
 
@@ -26,7 +31,7 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
         private set => SetProperty(ref _details, value);
     }
 
-    public ExpenseLineItemsViewModel LineItems { get; } = new();
+    public ExpenseLineItemsViewModel LineItems { get; }
 
     public string Message
     {
@@ -36,7 +41,7 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
 
     public async Task LoadAsync(ExpenseListRowViewModel? row)
     {
-        LineItems.LineItems.Clear();
+        LineItems.Load([]);
 
         if (row is null)
         {
@@ -58,10 +63,7 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
 
         Details = MapDetails(expense);
 
-        foreach (var lineItem in expense.LineItems)
-        {
-            LineItems.LineItems.Add(MapLineItem(lineItem));
-        }
+        LineItems.Load(expense.LineItems);
 
         Message = "";
     }
@@ -84,41 +86,47 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
         };
     }
 
-    private static ExpenseLineItemViewModel MapLineItem(ExpenseLineItemDto lineItem)
-    {
-        return new ExpenseLineItemViewModel
-        {
-            ExpenseLineItemId = lineItem.ExpenseLineItemId,
-            CodeId = lineItem.CodeId ?? "",
-            AccountingCode = lineItem.Code ?? lineItem.CodeName ?? "",
-            Description = lineItem.Description ?? "",
-            Amount = lineItem.Total,
-        };
-    }
-
     private async Task SaveAsync()
     {
         if (Details is null)
             return;
 
-        Message = "Saving...";
+        try
+        {
+            Message = "Saving...";
 
-        await _expenseService.UpdateExpenseAsync(
-            expenseId: Details.ExpenseId,
-            expenseDate: Details.ExpenseDate,
-            paidDate: Details.PaidDate,
-            sourceType: Enum.Parse<ExpenseSourceType>(
-                Details.SourceType.Replace(" ", ""),
-                ignoreCase: true
-            ),
-            documentNumber: Details.DocumentNumber,
-            businessName: Details.BusinessName,
-            description: Details.Description,
-            total: Details.Total,
-            notes: null
-        );
+            await _expenseService.UpdateExpenseAsync(
+                expenseId: Details.ExpenseId,
+                expenseDate: Details.ExpenseDate,
+                paidDate: Details.PaidDate,
+                sourceType: Enum.Parse<ExpenseSourceType>(
+                    Details.SourceType.Replace(" ", ""),
+                    ignoreCase: true
+                ),
+                documentNumber: Details.DocumentNumber,
+                businessName: Details.BusinessName,
+                description: Details.Description,
+                total: Details.Total,
+                notes: null
+            );
 
-        Message = "Saved.";
-        ExpenseSaved?.Invoke(this, Details);
+            await LineItems.SaveAsync(Details.ExpenseId);
+
+            var refreshedExpense = await _expenseService.GetExpenseDetailsAsync(Details.ExpenseId);
+
+            if (refreshedExpense is not null)
+            {
+                Details = MapDetails(refreshedExpense);
+                LineItems.Load(refreshedExpense.LineItems);
+            }
+
+            Message = "Saved.";
+
+            ExpenseSaved?.Invoke(this, Details.ExpenseId);
+        }
+        catch (Exception ex)
+        {
+            Message = $"Could not save: {ex.Message}";
+        }
     }
 }

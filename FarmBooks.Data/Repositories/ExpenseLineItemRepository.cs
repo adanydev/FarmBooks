@@ -17,29 +17,35 @@ public sealed class ExpenseLineItemRepository
     {
         using var connection = _db.CreateConnection();
 
-        await connection.ExecuteAsync("""
-        INSERT INTO ExpenseLineItems (
-            ExpenseLineItemId, ExpenseId, CodeId, Description,
-            Total, VATTreatment, CreatedAt, UpdatedAt, DeletedAt
-        )
-        VALUES (
-            @ExpenseLineItemId, @ExpenseId, @CodeId, @Description,
-            @Total, @VATTreatment, @CreatedAt, @UpdatedAt, @DeletedAt
+        await connection.ExecuteAsync(
+            """
+            INSERT INTO ExpenseLineItems (
+                ExpenseLineItemId, ExpenseId, CodeId, Description,
+                Total, VATTreatment, CreatedAt, UpdatedAt, DeletedAt
+            )
+            VALUES (
+                @ExpenseLineItemId, @ExpenseId, @CodeId, @Description,
+                @Total, @VATTreatment, @CreatedAt, @UpdatedAt, @DeletedAt
+            );
+            """,
+            item
         );
-        """, item);
     }
 
     public async Task<IReadOnlyList<ExpenseLineItem>> ListForExpenseAsync(string expenseId)
     {
         using var connection = _db.CreateConnection();
 
-        var items = await connection.QueryAsync<ExpenseLineItem>("""
-        SELECT *
-        FROM ExpenseLineItems
-        WHERE ExpenseId = @ExpenseId
-          AND DeletedAt IS NULL
-        ORDER BY CreatedAt;
-        """, new { ExpenseId = expenseId });
+        var items = await connection.QueryAsync<ExpenseLineItem>(
+            """
+            SELECT *
+            FROM ExpenseLineItems
+            WHERE ExpenseId = @ExpenseId
+              AND DeletedAt IS NULL
+            ORDER BY CreatedAt;
+            """,
+            new { ExpenseId = expenseId }
+        );
 
         return items.ToList();
     }
@@ -48,16 +54,35 @@ public sealed class ExpenseLineItemRepository
     {
         using var connection = _db.CreateConnection();
 
-        await connection.ExecuteAsync("""
-        UPDATE ExpenseLineItems
-        SET DeletedAt = @Now,
-            UpdatedAt = @Now
-        WHERE ExpenseLineItemId = @ExpenseLineItemId
-          AND DeletedAt IS NULL;
-        """, new
-        {
-            ExpenseLineItemId = expenseLineItemId,
-            Now = DateTime.UtcNow
-        });
+        await connection.ExecuteAsync(
+            """
+            UPDATE ExpenseLineItems
+            SET DeletedAt = @Now,
+                UpdatedAt = @Now
+            WHERE ExpenseLineItemId = @ExpenseLineItemId
+              AND DeletedAt IS NULL;
+            """,
+            new { ExpenseLineItemId = expenseLineItemId, Now = DateTime.UtcNow }
+        );
+    }
+
+    public async Task UpdateAsync(ExpenseLineItem item)
+    {
+        using var connection = _db.CreateConnection();
+
+        await connection.ExecuteAsync(
+            """
+            UPDATE ExpenseLineItems
+            SET
+                CodeId = @CodeId,
+                Description = @Description,
+                Total = @Total,
+                VATTreatment = @VATTreatment,
+                UpdatedAt = @UpdatedAt
+            WHERE ExpenseLineItemId = @ExpenseLineItemId
+              AND DeletedAt IS NULL;
+            """,
+            item
+        );
     }
 }

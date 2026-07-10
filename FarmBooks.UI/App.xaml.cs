@@ -59,13 +59,13 @@ public partial class App : Application
                         // Services
                         services.AddTransient<IExpenseService, ExpenseService>();
                         services.AddTransient<IAccountingCodeService, AccountingCodeService>();
+                        services.AddTransient<IExpenseLineItemService, ExpenseLineItemService>();
 
                         services.AddTransient<AuditService>();
                         services.AddTransient<BackupService>();
                         services.AddTransient<BankService>();
                         services.AddTransient<DashboardService>();
                         services.AddTransient<ExpenseDocumentService>();
-                        services.AddTransient<ExpenseLineItemService>();
                         services.AddTransient<ExpenseMatchingService>();
                         services.AddTransient<ImportService>();
                         services.AddTransient<SettingsService>();
@@ -79,6 +79,7 @@ public partial class App : Application
 
                         // ViewModels
                         services.AddTransient<ExpensesViewModel>();
+                        services.AddTransient<ExpenseLineItemsViewModel>();
                         services.AddTransient<ExpenseListViewModel>();
                         services.AddTransient<ExpenseEditorViewModel>();
                         services.AddTransient<AccountingCodesViewModel>();

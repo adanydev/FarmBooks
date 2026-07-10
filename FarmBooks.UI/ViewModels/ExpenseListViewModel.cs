@@ -62,6 +62,33 @@ public sealed class ExpenseListViewModel : ViewModelBase
         return row;
     }
 
+    public async Task<ExpenseListRowViewModel?> RefreshExpenseAsync(string expenseId)
+    {
+        if (string.IsNullOrWhiteSpace(expenseId))
+            return null;
+
+        var expenses = await _expenseService.GetExpenseListAsync();
+
+        var refreshedExpense = expenses.FirstOrDefault(expense => expense.ExpenseId == expenseId);
+
+        if (refreshedExpense is null)
+            return null;
+
+        var refreshedRow = MapToRow(refreshedExpense);
+
+        var existingRow = Expenses.FirstOrDefault(expense => expense.ExpenseId == expenseId);
+
+        if (existingRow is null)
+        {
+            Expenses.Insert(0, refreshedRow);
+            return refreshedRow;
+        }
+
+        CopyValues(refreshedRow, existingRow);
+
+        return existingRow;
+    }
+
     private static ExpenseListRowViewModel MapToRow(ExpenseListItemDto expense)
     {
         return new ExpenseListRowViewModel
@@ -79,5 +106,23 @@ public sealed class ExpenseListViewModel : ViewModelBase
             LineItemCount = expense.LineItemCount,
             DocumentCount = expense.DocumentCount,
         };
+    }
+
+    private static void CopyValues(
+        ExpenseListRowViewModel source,
+        ExpenseListRowViewModel destination
+    )
+    {
+        destination.ExpenseDate = source.ExpenseDate;
+        destination.PaidDate = source.PaidDate;
+        destination.SourceType = source.SourceType;
+        destination.DocumentNumber = source.DocumentNumber;
+        destination.BusinessName = source.BusinessName;
+        destination.Description = source.Description;
+        destination.Total = source.Total;
+        destination.Status = source.Status;
+        destination.Matched = source.Matched;
+        destination.LineItemCount = source.LineItemCount;
+        destination.DocumentCount = source.DocumentCount;
     }
 }

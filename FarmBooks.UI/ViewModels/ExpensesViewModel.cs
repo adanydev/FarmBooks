@@ -47,18 +47,13 @@ public sealed class ExpensesViewModel : ViewModelBase
         SelectedExpense = row;
     }
 
-    private void ExpenseEditor_ExpenseSaved(object? sender, ExpenseDetailsViewModel details)
+    private async void ExpenseEditor_ExpenseSaved(object? sender, string expenseId)
     {
-        if (SelectedExpense is null)
-            return;
+        var refreshedRow = await ExpenseList.RefreshExpenseAsync(expenseId);
 
-        SelectedExpense.ExpenseDate = details.ExpenseDate;
-        SelectedExpense.PaidDate = details.PaidDate;
-        SelectedExpense.SourceType = details.SourceType;
-        SelectedExpense.DocumentNumber = details.DocumentNumber;
-        SelectedExpense.BusinessName = details.BusinessName;
-        SelectedExpense.Description = details.Description;
-        SelectedExpense.Total = details.Total;
-        SelectedExpense.Status = details.Status;
+        if (refreshedRow is not null)
+        {
+            SelectedExpense = refreshedRow;
+        }
     }
 }

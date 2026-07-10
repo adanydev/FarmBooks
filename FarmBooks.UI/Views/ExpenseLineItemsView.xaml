@@ -7,48 +7,69 @@
             <TextBlock Text="Line Items"
                        FontSize="18"
                        FontWeight="SemiBold"
+                       VerticalAlignment="Center"
                        DockPanel.Dock="Left"/>
 
-            <Button Content="Add Line"
-                    Width="90"
-                    Height="30"
-                    DockPanel.Dock="Right"
-                    Command="{Binding AddLineItemCommand}"/>
+            <StackPanel Orientation="Horizontal"
+                        DockPanel.Dock="Right">
+
+                <Button Content="Add Line"
+                        Width="90"
+                        Height="30"
+                        Margin="0,0,8,0"
+                        Command="{Binding AddLineItemCommand}"/>
+
+                <Button Content="Remove Line"
+                        Width="100"
+                        Height="30"
+                        Command="{Binding RemoveLineItemCommand}"/>
+            </StackPanel>
         </DockPanel>
 
         <DataGrid ItemsSource="{Binding LineItems}"
+                  SelectedItem="{Binding SelectedLineItem}"
                   AutoGenerateColumns="False"
                   CanUserAddRows="False"
-                  CanUserDeleteRows="True"
+                  CanUserDeleteRows="False"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow"
                   GridLinesVisibility="Horizontal"
                   HeadersVisibility="Column"
                   MinHeight="160">
 
             <DataGrid.Columns>
                 <DataGridComboBoxColumn Header="Code"
-                                        SelectedItemBinding="{Binding AccountingCode, UpdateSourceTrigger=PropertyChanged}"
-                                        Width="120">
+                                        SelectedValueBinding="{Binding CodeId, UpdateSourceTrigger=PropertyChanged}"
+                                        SelectedValuePath="CodeId"
+                                        DisplayMemberPath="DisplayName"
+                                        Width="180">
+
                     <DataGridComboBoxColumn.ElementStyle>
                         <Style TargetType="ComboBox">
                             <Setter Property="ItemsSource"
-                                    Value="{Binding DataContext.AccountingCodes, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    Value="{Binding DataContext.AccountingCodes,
+                                            RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                         </Style>
                     </DataGridComboBoxColumn.ElementStyle>
 
                     <DataGridComboBoxColumn.EditingElementStyle>
                         <Style TargetType="ComboBox">
                             <Setter Property="ItemsSource"
-                                    Value="{Binding DataContext.AccountingCodes, RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                                    Value="{Binding DataContext.AccountingCodes,
+                                            RelativeSource={RelativeSource AncestorType=UserControl}}"/>
                         </Style>
                     </DataGridComboBoxColumn.EditingElementStyle>
                 </DataGridComboBoxColumn>
 
                 <DataGridTextColumn Header="Description"
-                                    Binding="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
+                                    Binding="{Binding Description,
+                                              UpdateSourceTrigger=PropertyChanged}"
                                     Width="*"/>
 
                 <DataGridTextColumn Header="Total"
-                                    Binding="{Binding Amount, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
+                                    Binding="{Binding Amount,
+                                              UpdateSourceTrigger=PropertyChanged,
+                                              StringFormat=F2}"
                                     Width="100"/>
             </DataGrid.Columns>
         </DataGrid>
