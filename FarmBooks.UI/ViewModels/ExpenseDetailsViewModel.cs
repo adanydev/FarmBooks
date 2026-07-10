@@ -14,15 +14,55 @@ public sealed class ExpenseDetailsViewModel : ViewModelBase, IDataErrorInfo
     private string _businessName = "";
     private string _description = "";
     private decimal _total;
-    private decimal _vatc;
-    private decimal _vats;
+
     private VatApplicability _vatApplicability = VatApplicability.NotSure;
 
     private VatEntryMethod _vatEntryMethod = VatEntryMethod.None;
 
+    private decimal? _vatc;
+    private decimal? _vats;
     private bool _isVatClassificationConfirmed;
+
     private string _notes = "";
     private string _status = "";
+
+    public bool IsVatEntered
+    {
+        get => VatEntryMethod == VatEntryMethod.Entered;
+        set
+        {
+            if (!value)
+            {
+                if (VatEntryMethod == VatEntryMethod.Entered)
+                {
+                    VatEntryMethod = VatEntryMethod.None;
+                }
+
+                return;
+            }
+
+            VatEntryMethod = VatEntryMethod.Entered;
+        }
+    }
+
+    public bool IsVatCalculated
+    {
+        get => VatEntryMethod == VatEntryMethod.Calculated;
+        set
+        {
+            if (!value)
+            {
+                if (VatEntryMethod == VatEntryMethod.Calculated)
+                {
+                    VatEntryMethod = VatEntryMethod.None;
+                }
+
+                return;
+            }
+
+            VatEntryMethod = VatEntryMethod.Calculated;
+        }
+    }
 
     public string ExpenseId
     {
@@ -72,28 +112,51 @@ public sealed class ExpenseDetailsViewModel : ViewModelBase, IDataErrorInfo
         set => SetProperty(ref _total, value);
     }
 
-    public decimal VATC
+    public VatApplicability VatApplicability
+    {
+        get => _vatApplicability;
+        set
+        {
+            if (!SetProperty(ref _vatApplicability, value))
+                return;
+
+            if (value != VatApplicability.Yes)
+            {
+                VatEntryMethod = VatEntryMethod.None;
+                VATC = null;
+                VATS = null;
+                IsVatClassificationConfirmed = false;
+            }
+
+            OnPropertyChanged(nameof(HasVat));
+        }
+    }
+
+    public bool HasVat => VatApplicability == VatApplicability.Yes;
+
+    public VatEntryMethod VatEntryMethod
+    {
+        get => _vatEntryMethod;
+        set
+        {
+            if (!SetProperty(ref _vatEntryMethod, value))
+                return;
+
+            OnPropertyChanged(nameof(IsVatEntered));
+            OnPropertyChanged(nameof(IsVatCalculated));
+        }
+    }
+
+    public decimal? VATC
     {
         get => _vatc;
         set => SetProperty(ref _vatc, value);
     }
 
-    public decimal VATS
+    public decimal? VATS
     {
         get => _vats;
         set => SetProperty(ref _vats, value);
-    }
-
-    public VatApplicability VatApplicability
-    {
-        get => _vatApplicability;
-        set => SetProperty(ref _vatApplicability, value);
-    }
-
-    public VatEntryMethod VatEntryMethod
-    {
-        get => _vatEntryMethod;
-        set => SetProperty(ref _vatEntryMethod, value);
     }
 
     public bool IsVatClassificationConfirmed

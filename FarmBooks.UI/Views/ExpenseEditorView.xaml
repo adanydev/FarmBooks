@@ -31,7 +31,11 @@
 
                 <views:ExpenseDetailsView DataContext="{Binding Details}"/>
 
-                <Separator Margin="0,8,0,8"/>
+                <Separator Margin="0,12,0,12"/>
+
+                <views:ExpenseVatView DataContext="{Binding Details}"/>
+
+                <Separator Margin="0,12,0,12"/>
 
                 <views:ExpenseLineItemsView DataContext="{Binding LineItems}"/>
             </StackPanel>

@@ -122,11 +122,13 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
             BusinessName = expense.BusinessName ?? "",
             Description = expense.Description ?? "",
             Total = expense.Total,
+
             VatApplicability = expense.VatApplicability,
             VatEntryMethod = expense.VatEntryMethod,
-            VATC = expense.VATC ?? 0m,
-            VATS = expense.VATS ?? 0m,
+            VATC = expense.VATC,
+            VATS = expense.VATS,
             IsVatClassificationConfirmed = expense.IsVatClassificationConfirmed,
+
             Notes = expense.Notes ?? "",
             Status = expense.Status,
         };
