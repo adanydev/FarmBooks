@@ -1,8 +1,9 @@
+using System.ComponentModel;
 using FarmBooks.UI.Infrastructure;
 
 namespace FarmBooks.UI.ViewModels;
 
-public sealed class ExpenseDetailsViewModel : ViewModelBase
+public sealed class ExpenseDetailsViewModel : ViewModelBase, IDataErrorInfo
 {
     private string _expenseId = "";
     private DateTime _expenseDate = DateTime.Today;
@@ -14,6 +15,7 @@ public sealed class ExpenseDetailsViewModel : ViewModelBase
     private decimal _total;
     private decimal _vatc;
     private decimal _vats;
+    private string _notes = "";
     private string _status = "";
 
     public string ExpenseId
@@ -76,9 +78,40 @@ public sealed class ExpenseDetailsViewModel : ViewModelBase
         set => SetProperty(ref _vats, value);
     }
 
+    public string Notes
+    {
+        get => _notes;
+        set => SetProperty(ref _notes, value);
+    }
+
     public string Status
     {
         get => _status;
         set => SetProperty(ref _status, value);
+    }
+
+    public bool HasErrors =>
+        !string.IsNullOrWhiteSpace(this[nameof(ExpenseDate)])
+        || !string.IsNullOrWhiteSpace(this[nameof(BusinessName)])
+        || !string.IsNullOrWhiteSpace(this[nameof(Total)]);
+
+    public string Error => "";
+
+    public string this[string columnName]
+    {
+        get
+        {
+            return columnName switch
+            {
+                nameof(ExpenseDate) when ExpenseDate == default => "Expense date is required.",
+
+                nameof(BusinessName) when string.IsNullOrWhiteSpace(BusinessName) =>
+                    "Business name is required.",
+
+                nameof(Total) when Total < 0 => "Total cannot be negative.",
+
+                _ => "",
+            };
+        }
     }
 }

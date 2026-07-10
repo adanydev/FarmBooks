@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
+using System.ComponentModel;
 using System.Windows.Input;
 using FarmBooks.Core.DTOs.Expenses;
 using FarmBooks.Services;
@@ -13,6 +15,7 @@ public sealed class ExpenseLineItemsViewModel : ViewModelBase
 
     private ExpenseLineItemViewModel? _selectedLineItem;
     private readonly HashSet<string> _deletedLineItemIds = [];
+    public event EventHandler? Changed;
 
     public ExpenseLineItemsViewModel(
         IAccountingCodeService accountingCodeService,
@@ -27,7 +30,7 @@ public sealed class ExpenseLineItemsViewModel : ViewModelBase
             RemoveSelectedLineItem,
             () => SelectedLineItem is not null
         );
-
+        LineItems.CollectionChanged += LineItems_CollectionChanged;
         _ = LoadAccountingCodesAsync();
     }
 
@@ -110,6 +113,32 @@ public sealed class ExpenseLineItemsViewModel : ViewModelBase
                 );
             }
         }
+    }
+
+    private void LineItems_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
+    {
+        if (e.OldItems is not null)
+        {
+            foreach (ExpenseLineItemViewModel item in e.OldItems)
+            {
+                item.PropertyChanged -= LineItem_PropertyChanged;
+            }
+        }
+
+        if (e.NewItems is not null)
+        {
+            foreach (ExpenseLineItemViewModel item in e.NewItems)
+            {
+                item.PropertyChanged += LineItem_PropertyChanged;
+            }
+        }
+
+        Changed?.Invoke(this, EventArgs.Empty);
+    }
+
+    private void LineItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        Changed?.Invoke(this, EventArgs.Empty);
     }
 
     private async Task LoadAccountingCodesAsync()

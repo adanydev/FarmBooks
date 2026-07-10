@@ -6,39 +6,41 @@
         <TextBlock Text="Expense Details"
                    FontSize="20"
                    FontWeight="SemiBold"
-                   Margin="0,0,0,16" />
+                   Margin="0,0,0,16"/>
 
-        <TextBlock Text="Date" />
-        <DatePicker SelectedDate="{Binding ExpenseDate}"
-                    Margin="0,4,0,12" />
+        <TextBlock Text="Date"/>
+        <DatePicker SelectedDate="{Binding ExpenseDate,
+                                   UpdateSourceTrigger=PropertyChanged,
+                                   ValidatesOnDataErrors=True}"
+                    Margin="0,4,0,12"/>
 
-        <TextBlock Text="Receipt #" />
-        <TextBox Text="{Binding DocumentNumber, UpdateSourceTrigger=PropertyChanged}"
-                 Margin="0,4,0,12" />
+        <TextBlock Text="Receipt #"/>
+        <TextBox Text="{Binding DocumentNumber,
+                        UpdateSourceTrigger=PropertyChanged}"
+                 Margin="0,4,0,12"/>
 
-        <TextBlock Text="Business Name" />
-        <TextBox Text="{Binding BusinessName, UpdateSourceTrigger=PropertyChanged}"
-                 Margin="0,4,0,12" />
+        <TextBlock Text="Business Name"/>
+        <TextBox Text="{Binding BusinessName,
+                        UpdateSourceTrigger=PropertyChanged,
+                        ValidatesOnDataErrors=True}"
+                 Margin="0,4,0,12"/>
 
-        <TextBlock Text="Description" />
-        <TextBox Text="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
-                 Margin="0,4,0,12" />
+        <TextBlock Text="Description"/>
+        <TextBox Text="{Binding Description,
+                        UpdateSourceTrigger=PropertyChanged}"
+                 Margin="0,4,0,12"/>
 
-        <TextBlock Text="Total" />
-        <TextBox Text="{Binding Total, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
-                 Margin="0,4,0,12" />
-
-        <TextBlock Text="VATC" />
-        <TextBox Text="{Binding VATC, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
-                 Margin="0,4,0,12" />
-
-        <TextBlock Text="VATS" />
-        <TextBox Text="{Binding VATS, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
-                 Margin="0,4,0,12" />
-
-        <TextBlock Text="Status" />
-        <TextBox Text="{Binding Status, Mode=OneWay}"
-                 IsReadOnly="True"
-                 Margin="0,4,0,12" />
+        <TextBlock Text="Total"/>
+        <TextBox Text="{Binding Total,
+                        UpdateSourceTrigger=PropertyChanged,
+                        ValidatesOnDataErrors=True,
+                        StringFormat=F2}"
+                 Margin="0,4,0,12"/>
+        <TextBlock Text="Notes"/>
+        <TextBox Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}"
+                 AcceptsReturn="True"
+                 TextWrapping="Wrap"
+                 MinHeight="70"
+                 Margin="0,4,0,12"/>
     </StackPanel>
 </UserControl>

@@ -18,9 +18,15 @@
                             DockPanel.Dock="Right"
                             Command="{Binding SaveCommand}"/>
 
-                    <TextBlock Text="{Binding Message}"
-                               Foreground="#6B7280"
-                               VerticalAlignment="Center"/>
+                    <StackPanel>
+                        <TextBlock Text="{Binding Message}"
+                                   Foreground="#6B7280"/>
+
+                        <TextBlock Text="{Binding ValidationMessage}"
+                                   Foreground="#B91C1C"
+                                   TextWrapping="Wrap"
+                                   Margin="0,3,8,0"/>
+                    </StackPanel>
                 </DockPanel>
 
                 <views:ExpenseDetailsView DataContext="{Binding Details}"/>

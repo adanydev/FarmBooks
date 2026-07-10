@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.Windows.Input;
 using FarmBooks.Core.DTOs.Expenses;
 using FarmBooks.Core.Models;
@@ -14,6 +15,10 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
     private string _message = "";
     public event EventHandler<string>? ExpenseSaved;
 
+    private bool _isLoading;
+    private bool _hasUnsavedChanges;
+    private string _validationMessage = "";
+
     public ExpenseEditorViewModel(
         IExpenseService expenseService,
         ExpenseLineItemsViewModel lineItems
@@ -23,6 +28,20 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
         LineItems = lineItems;
 
         SaveCommand = new AsyncRelayCommand(SaveAsync);
+
+        LineItems.Changed += LineItems_Changed;
+    }
+
+    public bool HasUnsavedChanges
+    {
+        get => _hasUnsavedChanges;
+        private set => SetProperty(ref _hasUnsavedChanges, value);
+    }
+
+    public string ValidationMessage
+    {
+        get => _validationMessage;
+        private set => SetProperty(ref _validationMessage, value);
     }
 
     public ExpenseDetailsViewModel? Details
@@ -41,31 +60,54 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
 
     public async Task LoadAsync(ExpenseListRowViewModel? row)
     {
-        LineItems.Load([]);
+        _isLoading = true;
 
-        if (row is null)
+        try
         {
-            Details = null;
-            Message = "";
-            return;
+            if (Details is not null)
+            {
+                Details.PropertyChanged -= Details_PropertyChanged;
+            }
+
+            LineItems.Load([]);
+
+            if (row is null)
+            {
+                Details = null;
+                Message = "";
+                ValidationMessage = "";
+                HasUnsavedChanges = false;
+                return;
+            }
+
+            Message = "Loading...";
+
+            var expense = await _expenseService.GetExpenseDetailsAsync(row.ExpenseId);
+
+            if (expense is null)
+            {
+                Details = null;
+                Message = "Expense could not be loaded.";
+                return;
+            }
+
+            Details = MapDetails(expense);
+            Details.PropertyChanged += Details_PropertyChanged;
+
+            LineItems.Load(expense.LineItems);
+
+            ValidationMessage = "";
+            HasUnsavedChanges = false;
+            Message = "Saved";
         }
-
-        Message = "Loading...";
-
-        var expense = await _expenseService.GetExpenseDetailsAsync(row.ExpenseId);
-
-        if (expense is null)
+        catch (Exception ex)
         {
-            Details = null;
-            Message = "Expense could not be loaded.";
-            return;
+            Message = $"Could not load expense: {ex.Message}";
         }
-
-        Details = MapDetails(expense);
-
-        LineItems.Load(expense.LineItems);
-
-        Message = "";
+        finally
+        {
+            _isLoading = false;
+        }
     }
 
     private static ExpenseDetailsViewModel MapDetails(ExpenseDetailsDto expense)
@@ -83,6 +125,7 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
             VATC = expense.VATC ?? 0m,
             VATS = expense.VATS ?? 0m,
             Status = expense.Status,
+            Notes = expense.Notes ?? "",
         };
     }
 
@@ -90,6 +133,16 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
     {
         if (Details is null)
             return;
+
+        ValidationMessage = "";
+
+        if (Details.HasErrors)
+        {
+            ValidationMessage = "Please correct the highlighted fields before saving.";
+
+            Message = "Not saved";
+            return;
+        }
 
         try
         {
@@ -107,7 +160,7 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
                 businessName: Details.BusinessName,
                 description: Details.Description,
                 total: Details.Total,
-                notes: null
+                notes: Details.Notes
             );
 
             await LineItems.SaveAsync(Details.ExpenseId);
@@ -116,17 +169,53 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
 
             if (refreshedExpense is not null)
             {
+                _isLoading = true;
+
+                if (Details is not null)
+                {
+                    Details.PropertyChanged -= Details_PropertyChanged;
+                }
+
                 Details = MapDetails(refreshedExpense);
+                Details.PropertyChanged += Details_PropertyChanged;
+
                 LineItems.Load(refreshedExpense.LineItems);
+
+                _isLoading = false;
             }
 
-            Message = "Saved.";
+            HasUnsavedChanges = false;
+            Message = "Saved";
 
             ExpenseSaved?.Invoke(this, Details.ExpenseId);
         }
         catch (Exception ex)
         {
-            Message = $"Could not save: {ex.Message}";
+            Message = "Could not save";
+            ValidationMessage = ex.Message;
         }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    private void LineItems_Changed(object? sender, EventArgs e)
+    {
+        MarkAsChanged();
+    }
+
+    private void Details_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        MarkAsChanged();
+    }
+
+    private void MarkAsChanged()
+    {
+        if (_isLoading)
+            return;
+
+        HasUnsavedChanges = true;
+        Message = "Unsaved changes";
     }
 }
