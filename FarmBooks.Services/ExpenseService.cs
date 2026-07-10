@@ -98,6 +98,11 @@ public sealed class ExpenseService : IExpenseService
         string? businessName,
         string? description,
         decimal total,
+        VatApplicability vatApplicability,
+        VatEntryMethod vatEntryMethod,
+        decimal? vatC,
+        decimal? vatS,
+        bool isVatClassificationConfirmed,
         string? notes
     )
     {
@@ -106,8 +111,13 @@ public sealed class ExpenseService : IExpenseService
         if (expense is null)
             throw new InvalidOperationException("Expense not found.");
 
+        if (expenseDate == default)
+            throw new InvalidOperationException("Expense date is required.");
+
         if (total < 0)
             throw new InvalidOperationException("Expense total cannot be negative.");
+
+        ValidateVat(vatApplicability, vatEntryMethod, vatC, vatS, isVatClassificationConfirmed);
 
         var oldExpense = new Expense
         {
@@ -119,8 +129,11 @@ public sealed class ExpenseService : IExpenseService
             BusinessName = expense.BusinessName,
             Description = expense.Description,
             Total = expense.Total,
+            VatApplicability = expense.VatApplicability,
+            VatEntryMethod = expense.VatEntryMethod,
             VATC = expense.VATC,
             VATS = expense.VATS,
+            IsVatClassificationConfirmed = expense.IsVatClassificationConfirmed,
             Notes = expense.Notes,
             CreatedAt = expense.CreatedAt,
             UpdatedAt = expense.UpdatedAt,
@@ -130,11 +143,34 @@ public sealed class ExpenseService : IExpenseService
         expense.ExpenseDate = expenseDate;
         expense.PaidDate = paidDate;
         expense.SourceType = sourceType;
-        expense.DocumentNumber = documentNumber;
-        expense.BusinessName = businessName;
-        expense.Description = description;
+        expense.DocumentNumber = string.IsNullOrWhiteSpace(documentNumber)
+            ? null
+            : documentNumber.Trim();
+
+        expense.BusinessName = string.IsNullOrWhiteSpace(businessName) ? null : businessName.Trim();
+
+        expense.Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim();
+
         expense.Total = total;
-        expense.Notes = notes;
+        expense.VatApplicability = vatApplicability;
+
+        if (vatApplicability == VatApplicability.Yes)
+        {
+            expense.VatEntryMethod = vatEntryMethod;
+            expense.VATC = NormalizeVatAmount(vatC);
+            expense.VATS = NormalizeVatAmount(vatS);
+            expense.IsVatClassificationConfirmed = isVatClassificationConfirmed;
+        }
+        else
+        {
+            // A deliberate No or Not Sure clears stale VAT details.
+            expense.VatEntryMethod = VatEntryMethod.None;
+            expense.VATC = null;
+            expense.VATS = null;
+            expense.IsVatClassificationConfirmed = false;
+        }
+
+        expense.Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
 
         await _expenses.UpdateAsync(expense);
 
@@ -234,9 +270,12 @@ public sealed class ExpenseService : IExpenseService
             BusinessName = expense.BusinessName,
             Description = expense.Description,
             Total = expense.Total,
+            Notes = expense.Notes,
+            VatApplicability = expense.VatApplicability,
+            VatEntryMethod = expense.VatEntryMethod,
             VATC = expense.VATC,
             VATS = expense.VATS,
-            Notes = expense.Notes,
+            IsVatClassificationConfirmed = expense.IsVatClassificationConfirmed,
             Status = status.ToString(),
             WorkflowStatus = workflow,
             IsMatched = isMatched,
@@ -254,7 +293,6 @@ public sealed class ExpenseService : IExpenseService
                         CodeName = code?.Name,
                         Description = x.Description,
                         Total = x.Total,
-                        VATTreatment = x.VATTreatment,
                     };
                 })
                 .ToList(),
@@ -270,5 +308,98 @@ public sealed class ExpenseService : IExpenseService
                 })
                 .ToList(),
         };
+    }
+
+    private static void ValidateVat(
+        VatApplicability vatApplicability,
+        VatEntryMethod vatEntryMethod,
+        decimal? vatC,
+        decimal? vatS,
+        bool isVatClassificationConfirmed
+    )
+    {
+        if (vatC is < 0)
+            throw new InvalidOperationException("VATC cannot be negative.");
+
+        if (vatS is < 0)
+            throw new InvalidOperationException("VATS cannot be negative.");
+
+        switch (vatApplicability)
+        {
+            case VatApplicability.NotSure:
+                if (vatEntryMethod != VatEntryMethod.None)
+                {
+                    throw new InvalidOperationException(
+                        "A VAT entry method cannot be selected while VAT is not sure."
+                    );
+                }
+
+                if (HasVatAmount(vatC) || HasVatAmount(vatS))
+                {
+                    throw new InvalidOperationException(
+                        "VATC and VATS cannot be entered while VAT is not sure."
+                    );
+                }
+
+                if (isVatClassificationConfirmed)
+                {
+                    throw new InvalidOperationException(
+                        "VATC/VATS cannot be confirmed while VAT is not sure."
+                    );
+                }
+
+                break;
+
+            case VatApplicability.No:
+                if (vatEntryMethod != VatEntryMethod.None)
+                {
+                    throw new InvalidOperationException(
+                        "A VAT entry method cannot be selected when VAT does not apply."
+                    );
+                }
+
+                if (HasVatAmount(vatC) || HasVatAmount(vatS))
+                {
+                    throw new InvalidOperationException(
+                        "An expense marked as having no VAT cannot contain VATC or VATS."
+                    );
+                }
+
+                // Confirmation is intentionally not required for No VAT.
+                break;
+
+            case VatApplicability.Yes:
+                if (vatEntryMethod == VatEntryMethod.None)
+                {
+                    throw new InvalidOperationException(
+                        "Choose whether the VAT was entered or calculated."
+                    );
+                }
+
+                // Do not require amounts or confirmation here.
+                // Unfinished work must still be saveable and will be flagged
+                // by the workflow calculator.
+                break;
+
+            default:
+                throw new ArgumentOutOfRangeException(
+                    nameof(vatApplicability),
+                    vatApplicability,
+                    "Unknown VAT applicability value."
+                );
+        }
+    }
+
+    private static bool HasVatAmount(decimal? value)
+    {
+        return value is not null && value.Value != 0m;
+    }
+
+    private static decimal? NormalizeVatAmount(decimal? value)
+    {
+        if (value is null || value.Value == 0m)
+            return null;
+
+        return decimal.Round(value.Value, 2);
     }
 }

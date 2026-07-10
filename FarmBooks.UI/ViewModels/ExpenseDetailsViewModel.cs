@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using FarmBooks.Core.Models;
 using FarmBooks.UI.Infrastructure;
 
 namespace FarmBooks.UI.ViewModels;
@@ -15,6 +16,11 @@ public sealed class ExpenseDetailsViewModel : ViewModelBase, IDataErrorInfo
     private decimal _total;
     private decimal _vatc;
     private decimal _vats;
+    private VatApplicability _vatApplicability = VatApplicability.NotSure;
+
+    private VatEntryMethod _vatEntryMethod = VatEntryMethod.None;
+
+    private bool _isVatClassificationConfirmed;
     private string _notes = "";
     private string _status = "";
 
@@ -76,6 +82,24 @@ public sealed class ExpenseDetailsViewModel : ViewModelBase, IDataErrorInfo
     {
         get => _vats;
         set => SetProperty(ref _vats, value);
+    }
+
+    public VatApplicability VatApplicability
+    {
+        get => _vatApplicability;
+        set => SetProperty(ref _vatApplicability, value);
+    }
+
+    public VatEntryMethod VatEntryMethod
+    {
+        get => _vatEntryMethod;
+        set => SetProperty(ref _vatEntryMethod, value);
+    }
+
+    public bool IsVatClassificationConfirmed
+    {
+        get => _isVatClassificationConfirmed;
+        set => SetProperty(ref _isVatClassificationConfirmed, value);
     }
 
     public string Notes

@@ -43,8 +43,59 @@ public static class ExpenseWorkflowStatusCalculator
             );
         }
 
-        // VAT review and confirmation rules will be added after the
-        // corresponding persisted fields are introduced.
+        if (expense.VatApplicability == VatApplicability.NotSure)
+        {
+            issues.Add(
+                new ExpenseWorkflowIssueDto
+                {
+                    Code = ExpenseWorkflowIssueCodes.VatNotSure,
+                    Message = "Decide whether this expense has VAT.",
+                }
+            );
+
+            return issues;
+        }
+
+        if (expense.VatApplicability == VatApplicability.No)
+        {
+            // No is a deliberate and complete VAT decision.
+            return issues;
+        }
+
+        var vatTotal = (expense.VATC ?? 0m) + (expense.VATS ?? 0m);
+
+        if (expense.VatEntryMethod == VatEntryMethod.None)
+        {
+            issues.Add(
+                new ExpenseWorkflowIssueDto
+                {
+                    Code = ExpenseWorkflowIssueCodes.VatNotReviewed,
+                    Message = "Choose whether VAT was entered or calculated.",
+                }
+            );
+        }
+
+        if (vatTotal <= 0m)
+        {
+            issues.Add(
+                new ExpenseWorkflowIssueDto
+                {
+                    Code = ExpenseWorkflowIssueCodes.VatAmountMissing,
+                    Message = "Enter or calculate the VATC/VATS amounts.",
+                }
+            );
+        }
+
+        if (!expense.IsVatClassificationConfirmed)
+        {
+            issues.Add(
+                new ExpenseWorkflowIssueDto
+                {
+                    Code = ExpenseWorkflowIssueCodes.VatClassificationNotConfirmed,
+                    Message = "Confirm that VATC and VATS are correct.",
+                }
+            );
+        }
 
         return issues;
     }

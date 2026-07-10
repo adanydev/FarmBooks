@@ -13,7 +13,8 @@ public interface IExpenseService
         string? businessName,
         string? description,
         decimal total,
-        string? notes);
+        string? notes
+    );
 
     Task UpdateExpenseAsync(
         string expenseId,
@@ -24,7 +25,13 @@ public interface IExpenseService
         string? businessName,
         string? description,
         decimal total,
-        string? notes);
+        VatApplicability vatApplicability,
+        VatEntryMethod vatEntryMethod,
+        decimal? vatC,
+        decimal? vatS,
+        bool isVatClassificationConfirmed,
+        string? notes
+    );
 
     Task<IReadOnlyList<ExpenseListItemDto>> GetExpenseListAsync();
 

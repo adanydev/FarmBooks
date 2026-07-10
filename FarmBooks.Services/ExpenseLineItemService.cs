@@ -39,7 +39,6 @@ public sealed class ExpenseLineItemService : IExpenseLineItemService
             CodeId = string.IsNullOrWhiteSpace(codeId) ? null : codeId,
             Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             Total = total,
-            VATTreatment = string.IsNullOrWhiteSpace(vatTreatment) ? null : vatTreatment,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -83,7 +82,6 @@ public sealed class ExpenseLineItemService : IExpenseLineItemService
             CodeId = string.IsNullOrWhiteSpace(codeId) ? null : codeId,
             Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             Total = total,
-            VATTreatment = string.IsNullOrWhiteSpace(vatTreatment) ? null : vatTreatment,
             UpdatedAt = DateTime.UtcNow,
         };
 
