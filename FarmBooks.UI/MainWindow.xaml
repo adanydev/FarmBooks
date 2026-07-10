@@ -18,16 +18,37 @@
                 <TextBlock Text="FarmBooks"
                            FontSize="24"
                            FontWeight="SemiBold"
-                           Margin="0,0,0,24" />
+                           Margin="0,0,0,24"/>
 
-                <Button Content="Dashboard" Margin="0,0,0,8" Height="36" />
-                <Button Content="Expenses" Margin="0,0,0,8" Height="36" />
-                <Button Content="Bank" Margin="0,0,0,8" Height="36" />
-                <Button Content="Accounting Codes" Margin="0,0,0,8" Height="36" />
-                <Button Content="Settings" Margin="0,0,0,8" Height="36" />
+                <Button Content="Dashboard"
+                        Margin="0,0,0,8"
+                        Height="36"
+                        IsEnabled="False"/>
+
+                <Button x:Name="ExpensesButton"
+                        Content="Expenses"
+                        Margin="0,0,0,8"
+                        Height="36"
+                        Click="ExpensesButton_Click"/>
+
+                <Button Content="Bank"
+                        Margin="0,0,0,8"
+                        Height="36"
+                        IsEnabled="False"/>
+
+                <Button x:Name="AccountingCodesButton"
+                        Content="Accounting Codes"
+                        Margin="0,0,0,8"
+                        Height="36"
+                        Click="AccountingCodesButton_Click"/>
+
+                <Button Content="Settings"
+                        Margin="0,0,0,8"
+                        Height="36"
+                        IsEnabled="False"/>
             </StackPanel>
         </Border>
 
-        <views:ExpensesView />
+        <ContentControl x:Name="MainContent"/>
     </DockPanel>
 </Window>

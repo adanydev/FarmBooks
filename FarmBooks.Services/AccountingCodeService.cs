@@ -8,9 +8,7 @@ public sealed class AccountingCodeService : IAccountingCodeService
     private readonly AccountingCodeRepository _codes;
     private readonly AuditService _auditService;
 
-    public AccountingCodeService(
-        AccountingCodeRepository codes,
-        AuditService auditService)
+    public AccountingCodeService(AccountingCodeRepository codes, AuditService auditService)
     {
         _codes = codes;
         _auditService = auditService;
@@ -19,7 +17,8 @@ public sealed class AccountingCodeService : IAccountingCodeService
     public async Task<string> CreateCodeAsync(
         string codeValue,
         string name,
-        string? description = null)
+        string? description = null
+    )
     {
         if (string.IsNullOrWhiteSpace(codeValue))
             throw new InvalidOperationException("Code is required.");
@@ -37,17 +36,12 @@ public sealed class AccountingCodeService : IAccountingCodeService
             Description = description,
             IsActive = true,
             CreatedAt = now,
-            UpdatedAt = now
+            UpdatedAt = now,
         };
 
         await _codes.CreateAsync(code);
 
-        await _auditService.WriteAsync(
-            "AccountingCode",
-            code.CodeId,
-            "Created",
-            null,
-            code);
+        await _auditService.WriteAsync("AccountingCode", code.CodeId, "Created", null, code);
 
         return code.CodeId;
     }
@@ -67,7 +61,8 @@ public sealed class AccountingCodeService : IAccountingCodeService
         string codeValue,
         string name,
         string? description,
-        bool isActive)
+        bool isActive
+    )
     {
         var code = await _codes.GetAsync(codeId);
 
@@ -88,7 +83,7 @@ public sealed class AccountingCodeService : IAccountingCodeService
             Description = code.Description,
             IsActive = code.IsActive,
             CreatedAt = code.CreatedAt,
-            UpdatedAt = code.UpdatedAt
+            UpdatedAt = code.UpdatedAt,
         };
 
         code.Code = codeValue.Trim();
@@ -98,12 +93,7 @@ public sealed class AccountingCodeService : IAccountingCodeService
 
         await _codes.UpdateAsync(code);
 
-        await _auditService.WriteAsync(
-            "AccountingCode",
-            code.CodeId,
-            "Updated",
-            oldCode,
-            code);
+        await _auditService.WriteAsync("AccountingCode", code.CodeId, "Updated", oldCode, code);
     }
 
     public async Task DisableCodeAsync(string codeId)
@@ -120,7 +110,8 @@ public sealed class AccountingCodeService : IAccountingCodeService
             codeId,
             "Disabled",
             code,
-            new { CodeId = codeId, IsActive = false });
+            new { CodeId = codeId, IsActive = false }
+        );
     }
 
     public async Task ReactivateCodeAsync(string codeId)
@@ -137,6 +128,7 @@ public sealed class AccountingCodeService : IAccountingCodeService
             codeId,
             "Reactivated",
             code,
-            new { CodeId = codeId, IsActive = true });
+            new { CodeId = codeId, IsActive = true }
+        );
     }
 }

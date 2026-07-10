@@ -1,73 +1,49 @@
 using System.Collections.ObjectModel;
+using FarmBooks.Core.DTOs.Expenses;
+using FarmBooks.Services;
 using FarmBooks.UI.Infrastructure;
 
 namespace FarmBooks.UI.ViewModels;
 
 public sealed class ExpenseListViewModel : ViewModelBase
 {
-    public ObservableCollection<ExpenseGridRowViewModel> Expenses { get; } = new();
+    private readonly IExpenseService _expenseService;
 
-    private ExpenseGridRowViewModel? _selectedExpense;
-
-    public ExpenseGridRowViewModel? SelectedExpense
+    public ExpenseListViewModel(IExpenseService expenseService)
     {
-        get => _selectedExpense;
-        set => SetProperty(ref _selectedExpense, value);
+        _expenseService = expenseService;
     }
 
-    public void LoadSampleData()
+    public ObservableCollection<ExpenseListRowViewModel> Expenses { get; } = new();
+
+    public async Task LoadAsync()
     {
         Expenses.Clear();
 
-        var tractorSupply = new ExpenseGridRowViewModel
+        var expenses = await _expenseService.GetExpenseListAsync();
+
+        foreach (var expense in expenses)
         {
-            ExpenseDate = DateTime.Today,
-            PaidDate = DateTime.Today,
-            SourceType = "Receipt",
-            BusinessName = "Tractor Supply",
-            DocumentNumber = "1001",
-            Description = "Feed and supplies",
-            Total = 128.45m,
-            Matched = false,
-            DocumentCount = 1
-        };
-
-        tractorSupply.LineItems.Add(new ExpenseLineItemViewModel
-        {
-            Description = "Feed",
-            AccountingCode = "Feed",
-            Amount = 100.00m
-        });
-
-        tractorSupply.LineItems.Add(new ExpenseLineItemViewModel
-        {
-            Description = "Supplies",
-            AccountingCode = "Supplies",
-            Amount = 28.45m
-        });
-
-        Expenses.Add(tractorSupply);
-
-        Expenses.Add(new ExpenseGridRowViewModel
-        {
-            ExpenseDate = DateTime.Today.AddDays(-2),
-            PaidDate = null,
-            SourceType = "Manual",
-            BusinessName = "Local Hardware",
-            DocumentNumber = "",
-            Description = "Fence repair materials",
-            Total = 74.20m,
-            Matched = false,
-            DocumentCount = 0
-        });
-
-        SelectedExpense = Expenses.FirstOrDefault();
+            Expenses.Add(MapToRow(expense));
+        }
     }
 
-    public ExpenseGridRowViewModel CreateNewExpense()
+    public async Task<ExpenseListRowViewModel> CreateNewExpenseAsync()
     {
-        var expense = new ExpenseGridRowViewModel
+        var expenseId = await _expenseService.CreateExpenseAsync(
+            expenseDate: DateTime.Today,
+            paidDate: DateTime.Today,
+            sourceType: FarmBooks.Core.Models.ExpenseSourceType.Receipt,
+            documentNumber: null,
+            businessName: null,
+            description: null,
+            total: 0m,
+            notes: null
+        );
+
+        var row = new ExpenseListRowViewModel
         {
+            ExpenseId = expenseId,
             ExpenseDate = DateTime.Today,
             PaidDate = DateTime.Today,
             SourceType = "Receipt",
@@ -75,13 +51,33 @@ public sealed class ExpenseListViewModel : ViewModelBase
             DocumentNumber = "",
             Description = "",
             Total = 0m,
+            Status = "Needs Line Items",
             Matched = false,
-            DocumentCount = 0
+            LineItemCount = 0,
+            DocumentCount = 0,
         };
 
-        Expenses.Insert(0, expense);
-        SelectedExpense = expense;
+        Expenses.Insert(0, row);
 
-        return expense;
+        return row;
+    }
+
+    private static ExpenseListRowViewModel MapToRow(ExpenseListItemDto expense)
+    {
+        return new ExpenseListRowViewModel
+        {
+            ExpenseId = expense.ExpenseId,
+            ExpenseDate = expense.ExpenseDate,
+            PaidDate = expense.PaidDate,
+            SourceType = expense.SourceType,
+            DocumentNumber = expense.DocumentNumber ?? "",
+            BusinessName = expense.BusinessName ?? "",
+            Description = expense.Description ?? "",
+            Total = expense.Total,
+            Status = expense.Status,
+            Matched = expense.IsMatched,
+            LineItemCount = expense.LineItemCount,
+            DocumentCount = expense.DocumentCount,
+        };
     }
 }

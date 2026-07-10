@@ -8,30 +8,16 @@
                    FontWeight="SemiBold"
                    Margin="0,0,0,16" />
 
-        <TextBlock Text="Expense Date" />
+        <TextBlock Text="Date" />
         <DatePicker SelectedDate="{Binding ExpenseDate}"
                     Margin="0,4,0,12" />
 
-        <TextBlock Text="Paid Date" />
-        <DatePicker SelectedDate="{Binding PaidDate}"
-                    Margin="0,4,0,12" />
-
-        <TextBlock Text="Source Type" />
-        <ComboBox SelectedValue="{Binding SourceType}"
-                  SelectedValuePath="Content"
-                  Margin="0,4,0,12">
-            <ComboBoxItem Content="Receipt" />
-            <ComboBoxItem Content="Bank Statement" />
-            <ComboBoxItem Content="Cash" />
-            <ComboBoxItem Content="Manual" />
-        </ComboBox>
+        <TextBlock Text="Receipt #" />
+        <TextBox Text="{Binding DocumentNumber, UpdateSourceTrigger=PropertyChanged}"
+                 Margin="0,4,0,12" />
 
         <TextBlock Text="Business Name" />
         <TextBox Text="{Binding BusinessName, UpdateSourceTrigger=PropertyChanged}"
-                 Margin="0,4,0,12" />
-
-        <TextBlock Text="Document Number" />
-        <TextBox Text="{Binding DocumentNumber, UpdateSourceTrigger=PropertyChanged}"
                  Margin="0,4,0,12" />
 
         <TextBlock Text="Description" />
@@ -42,15 +28,17 @@
         <TextBox Text="{Binding Total, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
                  Margin="0,4,0,12" />
 
+        <TextBlock Text="VATC" />
+        <TextBox Text="{Binding VATC, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
+                 Margin="0,4,0,12" />
+
+        <TextBlock Text="VATS" />
+        <TextBox Text="{Binding VATS, UpdateSourceTrigger=PropertyChanged, StringFormat=F2}"
+                 Margin="0,4,0,12" />
+
         <TextBlock Text="Status" />
         <TextBox Text="{Binding Status, Mode=OneWay}"
                  IsReadOnly="True"
-                 Margin="0,4,0,12" />
-
-        <TextBlock Text="Notes" />
-        <TextBox Height="80"
-                 AcceptsReturn="True"
-                 TextWrapping="Wrap"
                  Margin="0,4,0,12" />
     </StackPanel>
 </UserControl>

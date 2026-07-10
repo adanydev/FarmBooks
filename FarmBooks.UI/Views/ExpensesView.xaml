@@ -5,35 +5,35 @@
 
     <Grid Margin="16">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
         <DockPanel Margin="0,0,0,12">
             <TextBlock Text="Expenses"
                        FontSize="28"
                        FontWeight="SemiBold"
-                       DockPanel.Dock="Left" />
+                       DockPanel.Dock="Left"/>
 
             <Button Content="New Expense"
                     Width="120"
                     Height="34"
                     DockPanel.Dock="Right"
-                    Command="{Binding NewExpenseCommand}" />
+                    Command="{Binding NewExpenseCommand}"/>
         </DockPanel>
 
         <Grid Grid.Row="1">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="2*" />
-                <ColumnDefinition Width="12" />
-                <ColumnDefinition Width="420" />
+                <ColumnDefinition Width="2*"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="420"/>
             </Grid.ColumnDefinitions>
 
             <views:ExpenseListView Grid.Column="0"
-                                   DataContext="{Binding ExpenseList}" />
+                                   DataContext="{Binding}"/>
 
             <views:ExpenseEditorView Grid.Column="2"
-                                     DataContext="{Binding ExpenseEditor}" />
+                                     DataContext="{Binding ExpenseEditor}"/>
         </Grid>
     </Grid>
 </UserControl>

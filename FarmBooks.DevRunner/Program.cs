@@ -1,23 +1,21 @@
-﻿using FarmBooks.DevRunner;
-using FarmBooks.Data.Database;
+﻿using FarmBooks.Data.Database;
 using FarmBooks.Data.Repositories;
+using FarmBooks.DevRunner;
 using FarmBooks.Services;
 using Microsoft.Extensions.DependencyInjection;
 
 var databasePath = Path.Combine(
     Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
     "FarmBooks",
-    "farmbooks.sqlite");
+    "farmbooks.sqlite"
+);
 
 Directory.CreateDirectory(Path.GetDirectoryName(databasePath)!);
 
 var services = new ServiceCollection();
 
 services.AddSingleton(new DbConnectionFactory(databasePath));
-services.AddSingleton(new FarmBooks.Core.Models.DatabaseOptions
-{
-    DatabasePath = databasePath
-});
+services.AddSingleton(new FarmBooks.Core.Models.DatabaseOptions { DatabasePath = databasePath });
 
 services.AddTransient<SchemaInitializer>();
 

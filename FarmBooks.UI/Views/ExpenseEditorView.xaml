@@ -3,5 +3,32 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:views="clr-namespace:FarmBooks.UI.Views">
 
-    <views:ExpenseDetailsView DataContext="{Binding SelectedExpense}" />
+    <Border BorderBrush="#D1D5DB"
+            BorderThickness="1"
+            CornerRadius="4"
+            Padding="16"
+            Background="White">
+
+        <ScrollViewer VerticalScrollBarVisibility="Auto">
+            <StackPanel>
+                <DockPanel Margin="0,0,0,8">
+                    <Button Content="Save Expense"
+                            Width="110"
+                            Height="32"
+                            DockPanel.Dock="Right"
+                            Command="{Binding SaveCommand}"/>
+
+                    <TextBlock Text="{Binding Message}"
+                               Foreground="#6B7280"
+                               VerticalAlignment="Center"/>
+                </DockPanel>
+
+                <views:ExpenseDetailsView DataContext="{Binding Details}"/>
+
+                <Separator Margin="0,8,0,8"/>
+
+                <views:ExpenseLineItemsView DataContext="{Binding LineItems}"/>
+            </StackPanel>
+        </ScrollViewer>
+    </Border>
 </UserControl>

@@ -3,9 +3,9 @@ using FarmBooks.UI.ViewModels;
 
 namespace FarmBooks.UI.Views;
 
-public partial class ExpensesView : UserControl
+public partial class AccountingCodesView : UserControl
 {
-    public ExpensesView(ExpensesViewModel viewModel)
+    public AccountingCodesView(AccountingCodesViewModel viewModel)
     {
         InitializeComponent();
         DataContext = viewModel;

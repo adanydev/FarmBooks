@@ -5,31 +5,60 @@ namespace FarmBooks.UI.ViewModels;
 
 public sealed class ExpensesViewModel : ViewModelBase
 {
-    public ExpenseListViewModel ExpenseList { get; } = new();
-    public ExpenseEditorViewModel ExpenseEditor { get; } = new();
+    private ExpenseListRowViewModel? _selectedExpense;
+
+    public ExpensesViewModel(ExpenseListViewModel expenseList, ExpenseEditorViewModel expenseEditor)
+    {
+        ExpenseList = expenseList;
+        ExpenseEditor = expenseEditor;
+
+        NewExpenseCommand = new RelayCommand(AddNewExpense);
+
+        _ = LoadAsync();
+        ExpenseEditor.ExpenseSaved += ExpenseEditor_ExpenseSaved;
+    }
+
+    public ExpenseListViewModel ExpenseList { get; }
+    public ExpenseEditorViewModel ExpenseEditor { get; }
+
+    public ExpenseListRowViewModel? SelectedExpense
+    {
+        get => _selectedExpense;
+        set
+        {
+            if (SetProperty(ref _selectedExpense, value))
+            {
+                _ = ExpenseEditor.LoadAsync(value);
+            }
+        }
+    }
 
     public ICommand NewExpenseCommand { get; }
 
-    public ExpensesViewModel()
+    private async Task LoadAsync()
     {
-        NewExpenseCommand = new RelayCommand(AddNewExpense);
-
-        ExpenseList.PropertyChanged += ExpenseList_PropertyChanged;
-
-        ExpenseList.LoadSampleData();
-        ExpenseEditor.SelectedExpense = ExpenseList.SelectedExpense;
+        await ExpenseList.LoadAsync();
+        SelectedExpense = ExpenseList.Expenses.FirstOrDefault();
     }
 
-    private void AddNewExpense()
+    private async void AddNewExpense()
     {
-        ExpenseEditor.SelectedExpense = ExpenseList.CreateNewExpense();
+        var row = await ExpenseList.CreateNewExpenseAsync();
+        SelectedExpense = row;
     }
 
-    private void ExpenseList_PropertyChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    private void ExpenseEditor_ExpenseSaved(object? sender, ExpenseDetailsViewModel details)
     {
-        if (e.PropertyName == nameof(ExpenseListViewModel.SelectedExpense))
-        {
-            ExpenseEditor.SelectedExpense = ExpenseList.SelectedExpense;
-        }
+        if (SelectedExpense is null)
+            return;
+
+        SelectedExpense.ExpenseDate = details.ExpenseDate;
+        SelectedExpense.PaidDate = details.PaidDate;
+        SelectedExpense.SourceType = details.SourceType;
+        SelectedExpense.DocumentNumber = details.DocumentNumber;
+        SelectedExpense.BusinessName = details.BusinessName;
+        SelectedExpense.Description = details.Description;
+        SelectedExpense.Total = details.Total;
+        SelectedExpense.Status = details.Status;
     }
 }
