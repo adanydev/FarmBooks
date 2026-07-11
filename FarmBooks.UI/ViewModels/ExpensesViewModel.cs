@@ -6,6 +6,9 @@ namespace FarmBooks.UI.ViewModels;
 public sealed class ExpensesViewModel : ViewModelBase
 {
     private ExpenseListRowViewModel? _selectedExpense;
+    private bool _isInitialized;
+    private bool _isLoading;
+    private string _loadMessage = "";
 
     public ExpensesViewModel(ExpenseListViewModel expenseList, ExpenseEditorViewModel expenseEditor)
     {
@@ -14,8 +17,19 @@ public sealed class ExpensesViewModel : ViewModelBase
 
         NewExpenseCommand = new RelayCommand(AddNewExpense);
 
-        _ = LoadAsync();
         ExpenseEditor.ExpenseSaved += ExpenseEditor_ExpenseSaved;
+    }
+
+    public bool IsLoading
+    {
+        get => _isLoading;
+        private set => SetProperty(ref _isLoading, value);
+    }
+
+    public string LoadMessage
+    {
+        get => _loadMessage;
+        private set => SetProperty(ref _loadMessage, value);
     }
 
     public ExpenseListViewModel ExpenseList { get; }
@@ -35,10 +49,32 @@ public sealed class ExpensesViewModel : ViewModelBase
 
     public ICommand NewExpenseCommand { get; }
 
-    private async Task LoadAsync()
+    public async Task InitializeAsync()
     {
-        await ExpenseList.LoadAsync();
-        SelectedExpense = ExpenseList.Expenses.FirstOrDefault();
+        if (_isInitialized || IsLoading)
+            return;
+
+        IsLoading = true;
+        LoadMessage = "Loading expenses...";
+
+        try
+        {
+            await ExpenseList.LoadAsync();
+
+            SelectedExpense = ExpenseList.Expenses.FirstOrDefault();
+
+            _isInitialized = true;
+
+            LoadMessage = ExpenseList.Expenses.Count == 0 ? "No expenses found." : "";
+        }
+        catch (Exception ex)
+        {
+            LoadMessage = $"Could not load expenses: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+        }
     }
 
     private async void AddNewExpense()
@@ -51,9 +87,21 @@ public sealed class ExpensesViewModel : ViewModelBase
     {
         var refreshedRow = await ExpenseList.RefreshExpenseAsync(expenseId);
 
-        if (refreshedRow is not null)
+        if (refreshedRow is null)
+            return;
+
+        var isStillVisible = ExpenseList
+            .FilteredExpenses.Cast<ExpenseListRowViewModel>()
+            .Any(row => row.ExpenseId == expenseId);
+
+        if (isStillVisible)
         {
             SelectedExpense = refreshedRow;
+            return;
         }
+
+        SelectedExpense = ExpenseList
+            .FilteredExpenses.Cast<ExpenseListRowViewModel>()
+            .FirstOrDefault();
     }
 }

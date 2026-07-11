@@ -18,6 +18,30 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
     private bool _isLoading;
     private bool _hasUnsavedChanges;
     private string _validationMessage = "";
+    private IReadOnlyList<ExpenseWorkflowIssueDto> _outstandingItems = [];
+
+    public IReadOnlyList<ExpenseWorkflowIssueDto> OutstandingItems
+    {
+        get => _outstandingItems;
+        private set
+        {
+            if (SetProperty(ref _outstandingItems, value))
+            {
+                OnPropertyChanged(nameof(HasOutstandingItems));
+                OnPropertyChanged(nameof(OutstandingItemsToolTip));
+            }
+        }
+    }
+
+    public bool HasOutstandingItems => OutstandingItems.Count > 0;
+
+    public string OutstandingItemsToolTip =>
+        OutstandingItems.Count == 0
+            ? "No outstanding items."
+            : string.Join(
+                Environment.NewLine,
+                OutstandingItems.Select(issue => $"• {issue.Message}")
+            );
 
     public ExpenseEditorViewModel(
         IExpenseService expenseService,
@@ -30,6 +54,11 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
         SaveCommand = new AsyncRelayCommand(SaveAsync);
 
         LineItems.Changed += LineItems_Changed;
+    }
+
+    private void SetWorkflowIssues(ExpenseWorkflowStatusDto workflowStatus)
+    {
+        OutstandingItems = [.. workflowStatus.VatIssues, .. workflowStatus.TaxIssues];
     }
 
     public bool HasUnsavedChanges
@@ -93,7 +122,7 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
 
             Details = MapDetails(expense);
             Details.PropertyChanged += Details_PropertyChanged;
-
+            SetWorkflowIssues(expense.WorkflowStatus);
             LineItems.Load(expense.LineItems);
 
             ValidationMessage = "";
@@ -112,7 +141,7 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
 
     private static ExpenseDetailsViewModel MapDetails(ExpenseDetailsDto expense)
     {
-        return new ExpenseDetailsViewModel
+        var details = new ExpenseDetailsViewModel
         {
             ExpenseId = expense.ExpenseId,
             ExpenseDate = expense.ExpenseDate,
@@ -122,16 +151,19 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
             BusinessName = expense.BusinessName ?? "",
             Description = expense.Description ?? "",
             Total = expense.Total,
-
-            VatApplicability = expense.VatApplicability,
-            VatEntryMethod = expense.VatEntryMethod,
-            VATC = expense.VATC,
-            VATS = expense.VATS,
-            IsVatClassificationConfirmed = expense.IsVatClassificationConfirmed,
-
             Notes = expense.Notes ?? "",
             Status = expense.Status,
         };
+
+        details.LoadVatValues(
+            expense.VatApplicability,
+            expense.VatEntryMethod,
+            expense.VATC,
+            expense.VATS,
+            expense.IsVatClassificationConfirmed
+        );
+
+        return details;
     }
 
     private async Task SaveAsync()
@@ -187,6 +219,7 @@ public sealed class ExpenseEditorViewModel : ViewModelBase
                 }
 
                 Details = MapDetails(refreshedExpense);
+                SetWorkflowIssues(refreshedExpense.WorkflowStatus);
                 Details.PropertyChanged += Details_PropertyChanged;
 
                 LineItems.Load(refreshedExpense.LineItems);

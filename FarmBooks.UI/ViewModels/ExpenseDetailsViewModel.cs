@@ -1,4 +1,6 @@
 using System.ComponentModel;
+using System.Windows.Input;
+using FarmBooks.Core;
 using FarmBooks.Core.Models;
 using FarmBooks.UI.Infrastructure;
 
@@ -25,6 +27,27 @@ public sealed class ExpenseDetailsViewModel : ViewModelBase, IDataErrorInfo
 
     private string _notes = "";
     private string _status = "";
+
+    private bool _suppressVatConfirmationReset;
+
+    public string VatCalculationToolTip =>
+        $"""
+Calculate VAT
+
+Formula:
+(Total ÷ (1 + VAT Rate)) × VAT Rate
+
+Current VAT Rate: {TaxConstants.VatRate:P0}
+""";
+
+    public ICommand CalculateVatCCommand { get; }
+    public ICommand CalculateVatSCommand { get; }
+
+    public ExpenseDetailsViewModel()
+    {
+        CalculateVatCCommand = new RelayCommand(CalculateVatC);
+        CalculateVatSCommand = new RelayCommand(CalculateVatS);
+    }
 
     public bool IsVatEntered
     {
@@ -150,13 +173,31 @@ public sealed class ExpenseDetailsViewModel : ViewModelBase, IDataErrorInfo
     public decimal? VATC
     {
         get => _vatc;
-        set => SetProperty(ref _vatc, value);
+        set
+        {
+            if (!SetProperty(ref _vatc, value))
+                return;
+
+            if (!_suppressVatConfirmationReset)
+            {
+                IsVatClassificationConfirmed = false;
+            }
+        }
     }
 
     public decimal? VATS
     {
         get => _vats;
-        set => SetProperty(ref _vats, value);
+        set
+        {
+            if (!SetProperty(ref _vats, value))
+                return;
+
+            if (!_suppressVatConfirmationReset)
+            {
+                IsVatClassificationConfirmed = false;
+            }
+        }
     }
 
     public bool IsVatClassificationConfirmed
@@ -179,7 +220,6 @@ public sealed class ExpenseDetailsViewModel : ViewModelBase, IDataErrorInfo
 
     public bool HasErrors =>
         !string.IsNullOrWhiteSpace(this[nameof(ExpenseDate)])
-        || !string.IsNullOrWhiteSpace(this[nameof(BusinessName)])
         || !string.IsNullOrWhiteSpace(this[nameof(Total)]);
 
     public string Error => "";
@@ -191,7 +231,6 @@ public sealed class ExpenseDetailsViewModel : ViewModelBase, IDataErrorInfo
             return columnName switch
             {
                 nameof(ExpenseDate) when ExpenseDate == default => "Expense date is required.",
-
                 nameof(BusinessName) when string.IsNullOrWhiteSpace(BusinessName) =>
                     "Business name is required.",
 
@@ -199,6 +238,53 @@ public sealed class ExpenseDetailsViewModel : ViewModelBase, IDataErrorInfo
 
                 _ => "",
             };
+        }
+    }
+
+    private void CalculateVatC()
+    {
+        VATC = CalculateVatFromTotal();
+        VATS = null;
+        VatEntryMethod = VatEntryMethod.Calculated;
+    }
+
+    private void CalculateVatS()
+    {
+        VATS = CalculateVatFromTotal();
+        VATC = null;
+        VatEntryMethod = VatEntryMethod.Calculated;
+    }
+
+    private decimal CalculateVatFromTotal()
+    {
+        if (Total <= 0m)
+            return 0m;
+
+        var vat = (Total / TaxConstants.VatMultiplier) * TaxConstants.VatRate;
+        return decimal.Round(vat, 2, MidpointRounding.AwayFromZero);
+    }
+
+    public void LoadVatValues(
+        VatApplicability vatApplicability,
+        VatEntryMethod vatEntryMethod,
+        decimal? vatC,
+        decimal? vatS,
+        bool isConfirmed
+    )
+    {
+        _suppressVatConfirmationReset = true;
+
+        try
+        {
+            VatApplicability = vatApplicability;
+            VatEntryMethod = vatEntryMethod;
+            VATC = vatC;
+            VATS = vatS;
+            IsVatClassificationConfirmed = isConfirmed;
+        }
+        finally
+        {
+            _suppressVatConfirmationReset = false;
         }
     }
 }

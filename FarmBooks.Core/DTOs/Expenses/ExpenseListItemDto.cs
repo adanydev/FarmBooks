@@ -18,4 +18,6 @@ public sealed class ExpenseListItemDto
     public bool IsTaxReady { get; set; }
     public int VatIssueCount { get; set; }
     public int TaxIssueCount { get; set; }
+    public IReadOnlyList<ExpenseWorkflowIssueDto> VatIssues { get; set; } = [];
+    public IReadOnlyList<ExpenseWorkflowIssueDto> TaxIssues { get; set; } = [];
 }

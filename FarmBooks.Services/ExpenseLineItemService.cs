@@ -16,8 +16,7 @@ public sealed class ExpenseLineItemService : IExpenseLineItemService
         string expenseId,
         string? codeId,
         string? description,
-        decimal total,
-        string? vatTreatment = null
+        decimal total
     )
     {
         if (string.IsNullOrWhiteSpace(expenseId))
@@ -62,8 +61,7 @@ public sealed class ExpenseLineItemService : IExpenseLineItemService
         string expenseLineItemId,
         string? codeId,
         string? description,
-        decimal total,
-        string? vatTreatment = null
+        decimal total
     )
     {
         if (string.IsNullOrWhiteSpace(expenseLineItemId))

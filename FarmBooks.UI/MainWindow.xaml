@@ -38,22 +38,6 @@
                                   IsEnabled="False"/>
                 </Menu>
 
-                <Border DockPanel.Dock="Top"
-                        BorderBrush="#D1D5DB"
-                        BorderThickness="0,0,0,1"
-                        Padding="12,8"
-                        Background="#F9FAFB">
-
-                        <DockPanel>
-                                <TextBlock Text="FarmBooks"
-                                           FontSize="22"
-                                           FontWeight="SemiBold"
-                                           VerticalAlignment="Center"
-                                           DockPanel.Dock="Left"/>
-
-                        </DockPanel>
-                </Border>
-
                 <ContentControl x:Name="MainContent"/>
         </DockPanel>
 </Window>

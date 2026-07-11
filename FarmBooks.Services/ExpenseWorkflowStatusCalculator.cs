@@ -38,7 +38,7 @@ public static class ExpenseWorkflowStatusCalculator
                 new ExpenseWorkflowIssueDto
                 {
                     Code = ExpenseWorkflowIssueCodes.MissingPaidDate,
-                    Message = "Payment date is missing.",
+                    Message = ExpenseWorkflowMessages.PaymentDateMissing,
                 }
             );
         }
@@ -49,7 +49,7 @@ public static class ExpenseWorkflowStatusCalculator
                 new ExpenseWorkflowIssueDto
                 {
                     Code = ExpenseWorkflowIssueCodes.VatNotSure,
-                    Message = "Decide whether this expense has VAT.",
+                    Message = ExpenseWorkflowMessages.ChooseVatApplicability,
                 }
             );
 
@@ -58,11 +58,8 @@ public static class ExpenseWorkflowStatusCalculator
 
         if (expense.VatApplicability == VatApplicability.No)
         {
-            // No is a deliberate and complete VAT decision.
             return issues;
         }
-
-        var vatTotal = (expense.VATC ?? 0m) + (expense.VATS ?? 0m);
 
         if (expense.VatEntryMethod == VatEntryMethod.None)
         {
@@ -70,29 +67,31 @@ public static class ExpenseWorkflowStatusCalculator
                 new ExpenseWorkflowIssueDto
                 {
                     Code = ExpenseWorkflowIssueCodes.VatNotReviewed,
-                    Message = "Choose whether VAT was entered or calculated.",
+                    Message = ExpenseWorkflowMessages.ChooseVatEntryMethod,
                 }
             );
         }
 
-        if (vatTotal <= 0m)
-        {
-            issues.Add(
-                new ExpenseWorkflowIssueDto
-                {
-                    Code = ExpenseWorkflowIssueCodes.VatAmountMissing,
-                    Message = "Enter or calculate the VATC/VATS amounts.",
-                }
-            );
-        }
+        var vatTotal = (expense.VATC ?? 0m) + (expense.VATS ?? 0m);
 
         if (!expense.IsVatClassificationConfirmed)
         {
+            if (vatTotal <= 0m)
+            {
+                issues.Add(
+                    new ExpenseWorkflowIssueDto
+                    {
+                        Code = ExpenseWorkflowIssueCodes.VatAmountMissing,
+                        Message = ExpenseWorkflowMessages.VatAmountsMissing,
+                    }
+                );
+            }
+
             issues.Add(
                 new ExpenseWorkflowIssueDto
                 {
                     Code = ExpenseWorkflowIssueCodes.VatClassificationNotConfirmed,
-                    Message = "Confirm that VATC and VATS are correct.",
+                    Message = ExpenseWorkflowMessages.ConfirmVatClassification,
                 }
             );
         }
@@ -113,7 +112,7 @@ public static class ExpenseWorkflowStatusCalculator
                 new ExpenseWorkflowIssueDto
                 {
                     Code = ExpenseWorkflowIssueCodes.MissingLineItems,
-                    Message = "The expense has no line items.",
+                    Message = ExpenseWorkflowMessages.MissingLineItems,
                 }
             );
 
@@ -126,7 +125,7 @@ public static class ExpenseWorkflowStatusCalculator
                 new ExpenseWorkflowIssueDto
                 {
                     Code = ExpenseWorkflowIssueCodes.MissingAccountingCode,
-                    Message = "One or more line items need an accounting code.",
+                    Message = ExpenseWorkflowMessages.MissingAccountingCode,
                 }
             );
         }
@@ -140,7 +139,7 @@ public static class ExpenseWorkflowStatusCalculator
                 new ExpenseWorkflowIssueDto
                 {
                     Code = ExpenseWorkflowIssueCodes.LineTotalMismatch,
-                    Message = "The line-item total does not match the expense total.",
+                    Message = ExpenseWorkflowMessages.LineItemTotalMismatch,
                 }
             );
         }

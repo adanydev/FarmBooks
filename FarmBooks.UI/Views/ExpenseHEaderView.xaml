@@ -8,21 +8,34 @@
                          FontWeight="SemiBold"
                          Margin="0,0,0,16"/>
 
-              <TextBlock Text="Receipt Date"/>
-              <DatePicker SelectedDate="{Binding ExpenseDate,
-                                           UpdateSourceTrigger=PropertyChanged,
-                                           ValidatesOnDataErrors=True}"
-                          Margin="0,4,0,12"/>
-
               <TextBlock Text="Payment Date"/>
               <DatePicker SelectedDate="{Binding PaidDate,
-                                           UpdateSourceTrigger=PropertyChanged}"
+                                   UpdateSourceTrigger=PropertyChanged}"
                           Margin="0,4,0,12"/>
 
-              <TextBlock Text="Receipt #"/>
-              <TextBox Text="{Binding DocumentNumber,
-                                UpdateSourceTrigger=PropertyChanged}"
-                       Margin="0,4,0,12"/>
+              <TextBlock Text="Receipt Date"/>
+              <DatePicker SelectedDate="{Binding ExpenseDate,
+                                   UpdateSourceTrigger=PropertyChanged,
+                                   ValidatesOnDataErrors=True}"
+                          Margin="0,4,0,12"/>
+
+              <TextBlock Text="Receipt # / Reference"/>
+
+              <ComboBox Text="{Binding DocumentNumber,
+                         Mode=TwoWay,
+                         UpdateSourceTrigger=PropertyChanged}"
+                        SelectedValuePath="Content"
+                        IsEditable="True"
+                        IsTextSearchEnabled="True"
+                        StaysOpenOnEdit="True"
+                        Margin="0,4,0,12">
+
+                     <ComboBoxItem Content="Bank Statement"/>
+                     <ComboBoxItem Content="Income"/>
+                     <ComboBoxItem Content="EFT Bank Statement"/>
+                     <ComboBoxItem Content="Wages and Allowances"/>
+                     <ComboBoxItem Content="Record Entry - Cash Without Receipt"/>
+              </ComboBox>
 
               <TextBlock Text="Business Name"/>
               <TextBox Text="{Binding BusinessName,

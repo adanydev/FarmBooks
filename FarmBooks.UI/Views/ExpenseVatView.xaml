@@ -71,21 +71,53 @@
                 <StackPanel Grid.Column="0">
                     <TextBlock Text="VATC"/>
 
-                    <TextBox Text="{Binding VATC,
-                                           UpdateSourceTrigger=LostFocus,
-                                           TargetNullValue='',
-                                           StringFormat=F2}"
-                             Margin="0,4,0,12"/>
+                    <Grid Margin="0,4,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="6"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding VATC,
+                                    UpdateSourceTrigger=LostFocus,
+                                    TargetNullValue='',
+                                    StringFormat=F2}"/>
+
+                        <Button Grid.Column="2"
+                                Width="30"
+                                Height="26"
+                                Padding="0"
+                                Content="🧮"
+                                ToolTip="{Binding VatCalculationToolTip}"
+                                Command="{Binding CalculateVatCCommand}"/>
+                    </Grid>
                 </StackPanel>
 
                 <StackPanel Grid.Column="2">
                     <TextBlock Text="VATS"/>
 
-                    <TextBox Text="{Binding VATS,
-                                           UpdateSourceTrigger=LostFocus,
-                                           TargetNullValue='',
-                                           StringFormat=F2}"
-                             Margin="0,4,0,12"/>
+                    <Grid Margin="0,4,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="6"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <TextBox Grid.Column="0"
+                                 Text="{Binding VATS,
+                                    UpdateSourceTrigger=LostFocus,
+                                    TargetNullValue='',
+                                    StringFormat=F2}"/>
+
+                        <Button Grid.Column="2"
+                                Width="30"
+                                Height="26"
+                                Padding="0"
+                                Content="🧮"
+                                ToolTip="{Binding VatCalculationToolTip}"
+                                Command="{Binding CalculateVatSCommand}"/>
+                    </Grid>
                 </StackPanel>
             </Grid>
 

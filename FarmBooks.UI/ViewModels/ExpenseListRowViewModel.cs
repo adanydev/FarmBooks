@@ -21,6 +21,21 @@ public sealed class ExpenseListRowViewModel : ViewModelBase
 
     private int _vatIssueCount;
     private int _taxIssueCount;
+    private string _vatIssuesToolTip = "";
+
+    private string _taxIssuesToolTip = "";
+
+    public string TaxIssuesToolTip
+    {
+        get => _taxIssuesToolTip;
+        set => SetProperty(ref _taxIssuesToolTip, value);
+    }
+
+    public string VatIssuesToolTip
+    {
+        get => _vatIssuesToolTip;
+        set => SetProperty(ref _vatIssuesToolTip, value);
+    }
 
     public string ExpenseId
     {
@@ -97,24 +112,52 @@ public sealed class ExpenseListRowViewModel : ViewModelBase
     public bool IsVatReady
     {
         get => _isVatReady;
-        set => SetProperty(ref _isVatReady, value);
+        set
+        {
+            if (SetProperty(ref _isVatReady, value))
+            {
+                OnPropertyChanged(nameof(VatStatusText));
+            }
+        }
     }
 
     public bool IsTaxReady
     {
         get => _isTaxReady;
-        set => SetProperty(ref _isTaxReady, value);
+        set
+        {
+            if (SetProperty(ref _isTaxReady, value))
+            {
+                OnPropertyChanged(nameof(TaxStatusText));
+            }
+        }
     }
 
     public int VatIssueCount
     {
         get => _vatIssueCount;
-        set => SetProperty(ref _vatIssueCount, value);
+        set
+        {
+            if (SetProperty(ref _vatIssueCount, value))
+            {
+                OnPropertyChanged(nameof(VatStatusText));
+            }
+        }
     }
 
     public int TaxIssueCount
     {
         get => _taxIssueCount;
-        set => SetProperty(ref _taxIssueCount, value);
+        set
+        {
+            if (SetProperty(ref _taxIssueCount, value))
+            {
+                OnPropertyChanged(nameof(TaxStatusText));
+            }
+        }
     }
+
+    public string VatStatusText => IsVatReady ? "✓" : $"{VatIssueCount}";
+
+    public string TaxStatusText => IsTaxReady ? "✓" : $"{TaxIssueCount}";
 }

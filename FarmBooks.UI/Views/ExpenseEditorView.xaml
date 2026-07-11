@@ -6,39 +6,102 @@
     <Border BorderBrush="#D1D5DB"
             BorderThickness="1"
             CornerRadius="4"
-            Padding="16"
             Background="White">
 
-        <ScrollViewer VerticalScrollBarVisibility="Auto">
-            <StackPanel>
-                <DockPanel Margin="0,0,0,8">
-                    <Button Content="Save Expense"
-                            Width="110"
-                            Height="32"
-                            DockPanel.Dock="Right"
-                            Command="{Binding SaveCommand}"/>
+        <Grid>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
 
-                    <StackPanel>
-                        <TextBlock Text="{Binding Message}"
-                                   Foreground="#6B7280"/>
+            <!-- Fixed editor toolbar -->
+            <Grid Grid.Row="0"
+                  Margin="16,14,16,12">
 
-                        <TextBlock Text="{Binding ValidationMessage}"
-                                   Foreground="#B91C1C"
-                                   TextWrapping="Wrap"
-                                   Margin="0,3,8,0"/>
-                    </StackPanel>
-                </DockPanel>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
 
-                <views:ExpenseDetailsView DataContext="{Binding Details}"/>
+                <StackPanel Grid.Column="0"
+                            Margin="0,0,12,0">
 
-                <Separator Margin="0,12,0,12"/>
+                    <TextBlock Text="{Binding Message}"
+                               Foreground="#6B7280"/>
 
-                <views:ExpenseVatView DataContext="{Binding Details}"/>
+                    <TextBlock Text="{Binding ValidationMessage}"
+                               Foreground="#B91C1C"
+                               TextWrapping="Wrap"
+                               Margin="0,3,0,0"/>
+                </StackPanel>
 
-                <Separator Margin="0,12,0,12"/>
+                <Button Grid.Column="1"
+                        Content="Save Expense"
+                        Width="115"
+                        Height="32"
+                        VerticalAlignment="Top"
+                        Command="{Binding SaveCommand}"/>
+            </Grid>
 
-                <views:ExpenseLineItemsView DataContext="{Binding LineItems}"/>
-            </StackPanel>
-        </ScrollViewer>
+            <!-- Scrollable editor content -->
+            <ScrollViewer Grid.Row="1"
+                          VerticalScrollBarVisibility="Auto"
+                          HorizontalScrollBarVisibility="Disabled">
+
+                <StackPanel Margin="16,0,16,16">
+
+                    <Border Padding="10"
+                            Margin="0,0,0,12"
+                            Background="#FFF7ED"
+                            BorderBrush="#FDBA74"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            ToolTip="{Binding OutstandingItemsToolTip}">
+
+                        <Border.Style>
+                            <Style TargetType="Border">
+                                <Setter Property="Visibility"
+                                        Value="Collapsed"/>
+
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasOutstandingItems}"
+                                                 Value="True">
+                                        <Setter Property="Visibility"
+                                                Value="Visible"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Border.Style>
+
+                        <StackPanel>
+                            <TextBlock Text="Outstanding Items"
+                                       FontWeight="SemiBold"/>
+
+                            <ItemsControl ItemsSource="{Binding OutstandingItems}"
+                                          Margin="0,4,0,0">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <TextBlock Text="{Binding Message,
+                                                                  StringFormat=• {0}}"
+                                                   TextWrapping="Wrap"
+                                                   Margin="0,2,0,0"/>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <views:ExpenseDetailsView DataContext="{Binding Details}"/>
+
+                    <Separator Margin="0,12,0,12"/>
+
+                    <views:ExpenseVatView DataContext="{Binding Details}"/>
+
+                    <Separator Margin="0,12,0,12"/>
+
+                    <views:ExpenseLineItemsView DataContext="{Binding LineItems}"/>
+                </StackPanel>
+            </ScrollViewer>
+        </Grid>
     </Border>
 </UserControl>

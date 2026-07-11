@@ -8,5 +8,4 @@ public sealed class ExpenseLineItemDto
     public string? CodeName { get; set; }
     public string? Description { get; set; }
     public decimal Total { get; set; }
-    public string? VATTreatment { get; set; }
 }

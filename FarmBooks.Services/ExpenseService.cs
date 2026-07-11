@@ -236,6 +236,8 @@ public sealed class ExpenseService : IExpenseService
                     IsTaxReady = workflow.IsTaxReady,
                     VatIssueCount = workflow.VatIssues.Count,
                     TaxIssueCount = workflow.TaxIssues.Count,
+                    VatIssues = workflow.VatIssues,
+                    TaxIssues = workflow.TaxIssues,
                     IsMatched = isMatched,
                     LineItemCount = lineItems.Count,
                     DocumentCount = documentCount,
@@ -319,75 +321,17 @@ public sealed class ExpenseService : IExpenseService
     )
     {
         if (vatC is < 0)
+        {
             throw new InvalidOperationException("VATC cannot be negative.");
+        }
 
         if (vatS is < 0)
-            throw new InvalidOperationException("VATS cannot be negative.");
-
-        switch (vatApplicability)
         {
-            case VatApplicability.NotSure:
-                if (vatEntryMethod != VatEntryMethod.None)
-                {
-                    throw new InvalidOperationException(
-                        "A VAT entry method cannot be selected while VAT is not sure."
-                    );
-                }
-
-                if (HasVatAmount(vatC) || HasVatAmount(vatS))
-                {
-                    throw new InvalidOperationException(
-                        "VATC and VATS cannot be entered while VAT is not sure."
-                    );
-                }
-
-                if (isVatClassificationConfirmed)
-                {
-                    throw new InvalidOperationException(
-                        "VATC/VATS cannot be confirmed while VAT is not sure."
-                    );
-                }
-
-                break;
-
-            case VatApplicability.No:
-                if (vatEntryMethod != VatEntryMethod.None)
-                {
-                    throw new InvalidOperationException(
-                        "A VAT entry method cannot be selected when VAT does not apply."
-                    );
-                }
-
-                if (HasVatAmount(vatC) || HasVatAmount(vatS))
-                {
-                    throw new InvalidOperationException(
-                        "An expense marked as having no VAT cannot contain VATC or VATS."
-                    );
-                }
-
-                // Confirmation is intentionally not required for No VAT.
-                break;
-
-            case VatApplicability.Yes:
-                if (vatEntryMethod == VatEntryMethod.None)
-                {
-                    throw new InvalidOperationException(
-                        "Choose whether the VAT was entered or calculated."
-                    );
-                }
-
-                // Do not require amounts or confirmation here.
-                // Unfinished work must still be saveable and will be flagged
-                // by the workflow calculator.
-                break;
-
-            default:
-                throw new ArgumentOutOfRangeException(
-                    nameof(vatApplicability),
-                    vatApplicability,
-                    "Unknown VAT applicability value."
-                );
+            throw new InvalidOperationException("VATS cannot be negative.");
         }
+
+        // Incomplete VAT work is allowed to save.
+        // The workflow calculator reports what still needs attention.
     }
 
     private static bool HasVatAmount(decimal? value)

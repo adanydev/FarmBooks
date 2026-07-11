@@ -8,16 +8,14 @@ public interface IExpenseLineItemService
         string expenseId,
         string? codeId,
         string? description,
-        decimal total,
-        string? vatTreatment = null
+        decimal total
     );
 
     Task UpdateLineItemAsync(
         string expenseLineItemId,
         string? codeId,
         string? description,
-        decimal total,
-        string? vatTreatment = null
+        decimal total
     );
 
     Task<IReadOnlyList<ExpenseLineItem>> ListForExpenseAsync(string expenseId);

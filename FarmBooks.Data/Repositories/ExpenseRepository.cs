@@ -68,29 +68,66 @@ public sealed class ExpenseRepository
     {
         using var connection = _db.CreateConnection();
 
-        return await connection.QuerySingleOrDefaultAsync<Expense>(
-            """
-            SELECT *
+        const string sql = """
+            SELECT
+                ExpenseId,
+                ExpenseDate,
+                PaidDate,
+                SourceType,
+                DocumentNumber,
+                BusinessName,
+                Description,
+                CAST(Total AS REAL) AS Total,
+                VatApplicability,
+                VatEntryMethod,
+                CAST(VATC AS REAL) AS VATC,
+                CAST(VATS AS REAL) AS VATS,
+                IsVatClassificationConfirmed,
+                Notes,
+                CreatedAt,
+                UpdatedAt,
+                DeletedAt
             FROM Expenses
-            WHERE ExpenseId = @ExpenseId
+            WHERE ExpenseId = @expenseId
               AND DeletedAt IS NULL;
-            """,
-            new { ExpenseId = expenseId }
-        );
+            """;
+
+        return await connection.QuerySingleOrDefaultAsync<Expense>(sql, new { expenseId });
     }
 
     public async Task<IReadOnlyList<Expense>> ListAsync()
     {
         using var connection = _db.CreateConnection();
 
-        var expenses = await connection.QueryAsync<Expense>(
-            """
-            SELECT *
+        const string sql = """
+            SELECT
+                ExpenseId,
+                ExpenseDate,
+                PaidDate,
+                SourceType,
+                DocumentNumber,
+                BusinessName,
+                Description,
+
+                CAST(Total AS REAL) AS Total,
+
+                VatApplicability,
+                VatEntryMethod,
+
+                CAST(VATC AS REAL) AS VATC,
+                CAST(VATS AS REAL) AS VATS,
+
+                IsVatClassificationConfirmed,
+                Notes,
+                CreatedAt,
+                UpdatedAt,
+                DeletedAt
             FROM Expenses
             WHERE DeletedAt IS NULL
-            ORDER BY ExpenseDate DESC, CreatedAt DESC;
-            """
-        );
+            ORDER BY PaidDate DESC, ExpenseDate DESC;
+            """;
+
+        var expenses = await connection.QueryAsync<Expense>(sql);
 
         return expenses.ToList();
     }

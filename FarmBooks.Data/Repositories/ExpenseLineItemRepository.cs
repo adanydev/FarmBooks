@@ -21,11 +21,11 @@ public sealed class ExpenseLineItemRepository
             """
             INSERT INTO ExpenseLineItems (
                 ExpenseLineItemId, ExpenseId, CodeId, Description,
-                Total, VATTreatment, CreatedAt, UpdatedAt, DeletedAt
+                Total, CreatedAt, UpdatedAt, DeletedAt
             )
             VALUES (
                 @ExpenseLineItemId, @ExpenseId, @CodeId, @Description,
-                @Total, @VATTreatment, @CreatedAt, @UpdatedAt, @DeletedAt
+                @Total, @CreatedAt, @UpdatedAt, @DeletedAt
             );
             """,
             item
@@ -36,16 +36,23 @@ public sealed class ExpenseLineItemRepository
     {
         using var connection = _db.CreateConnection();
 
-        var items = await connection.QueryAsync<ExpenseLineItem>(
-            """
-            SELECT *
+        const string sql = """
+            SELECT
+                ExpenseLineItemId,
+                ExpenseId,
+                CodeId,
+                Description,
+                CAST(Total AS REAL) AS Total,
+                CreatedAt,
+                UpdatedAt,
+                DeletedAt
             FROM ExpenseLineItems
-            WHERE ExpenseId = @ExpenseId
+            WHERE ExpenseId = @expenseId
               AND DeletedAt IS NULL
             ORDER BY CreatedAt;
-            """,
-            new { ExpenseId = expenseId }
-        );
+            """;
+
+        var items = await connection.QueryAsync<ExpenseLineItem>(sql, new { expenseId });
 
         return items.ToList();
     }
@@ -77,7 +84,6 @@ public sealed class ExpenseLineItemRepository
                 CodeId = @CodeId,
                 Description = @Description,
                 Total = @Total,
-                VATTreatment = @VATTreatment,
                 UpdatedAt = @UpdatedAt
             WHERE ExpenseLineItemId = @ExpenseLineItemId
               AND DeletedAt IS NULL;
