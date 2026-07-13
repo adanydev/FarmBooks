@@ -26,7 +26,7 @@ public sealed class SchemaInitializer
                 DocumentNumber TEXT NULL,
                 BusinessName TEXT NULL,
                 Description TEXT NULL,
-                Total NUMERIC NOT NULL CHECK (Total >= 0),
+                Total NUMERIC NOT NULL,
 
                 VatApplicability INTEGER NOT NULL DEFAULT 0,
                 VatEntryMethod INTEGER NOT NULL DEFAULT 0,
@@ -55,7 +55,7 @@ public sealed class SchemaInitializer
                 TransactionId TEXT NOT NULL,
                 CodeId TEXT NULL,
                 Description TEXT NULL,
-                Total NUMERIC NOT NULL CHECK (Total >= 0),
+                Total NUMERIC NOT NULL CHECK,
                 CreatedAt TEXT NOT NULL,
                 UpdatedAt TEXT NOT NULL,
                 DeletedAt TEXT NULL,
