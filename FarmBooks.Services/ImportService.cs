@@ -33,7 +33,7 @@ public sealed class ImportService
             ImportBatchRowId = Guid.NewGuid().ToString(),
             ImportBatchId = batch.ImportBatchId,
             RowNumber = 1,
-            EntityType = "Expense",
+            EntityType = "Transaction",
             RawJson = JsonSerializer.Serialize(new
             {
                 Date = DateTime.Today,
@@ -50,7 +50,7 @@ public sealed class ImportService
             ImportBatchRowId = Guid.NewGuid().ToString(),
             ImportBatchId = batch.ImportBatchId,
             RowNumber = 2,
-            EntityType = "Expense",
+            EntityType = "Transaction",
             RawJson = JsonSerializer.Serialize(new
             {
                 Date = "",

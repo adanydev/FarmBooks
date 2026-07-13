@@ -11,7 +11,7 @@ public sealed class BankTransaction
     public decimal MoneyOut { get; set; }
     public decimal? BalanceAfterTransaction { get; set; }
     public string? Reference { get; set; }
-    public string? ExpenseId { get; set; }
+    public string? TransactionId { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
     public DateTime? DeletedAt { get; set; }

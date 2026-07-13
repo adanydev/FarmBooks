@@ -112,13 +112,13 @@ public sealed class BankService
         return _bankRepository.ListTransactionsAsync();
     }
 
-    public Task MatchExpenseAsync(string bankTransactionId, string ExpenseId)
+    public Task MatchTransactionAsync(string bankTransactionId, string TransactionId)
     {
-        return _bankRepository.MatchExpenseAsync(bankTransactionId, ExpenseId);
+        return _bankRepository.MatchTransactionAsync(bankTransactionId, TransactionId);
     }
 
-    public Task UnmatchExpenseAsync(string bankTransactionId)
+    public Task UnmatchTransactionAsync(string bankTransactionId)
     {
-        return _bankRepository.UnmatchExpenseAsync(bankTransactionId);
+        return _bankRepository.UnmatchTransactionAsync(bankTransactionId);
     }
 }

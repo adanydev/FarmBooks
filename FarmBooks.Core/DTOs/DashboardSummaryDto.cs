@@ -7,9 +7,9 @@ public sealed class DashboardSummaryDto
     public int NeedsReviewCount { get; set; }
     public int CompleteCount { get; set; }
 
-    public int UnmatchedExpenseCount { get; set; }
+    public int UnmatchedTransactionCount { get; set; }
     public int UnmatchedBankTransactionCount { get; set; }
 
-    public int TotalExpenseCount { get; set; }
+    public int TotalTransactionCount { get; set; }
     public int TotalBankTransactionCount { get; set; }
 }

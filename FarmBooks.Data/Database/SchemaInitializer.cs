@@ -17,10 +17,10 @@ public sealed class SchemaInitializer
 
         await connection.ExecuteAsync(
             """
-            CREATE TABLE IF NOT EXISTS Expenses
+            CREATE TABLE IF NOT EXISTS Transactions
             (
-                ExpenseId TEXT PRIMARY KEY,
-                ExpenseDate TEXT NOT NULL,
+                TransactionId TEXT PRIMARY KEY,
+                TransactionDate TEXT NOT NULL,
                 PaidDate TEXT NULL,
                 SourceType INTEGER NOT NULL,
                 DocumentNumber TEXT NULL,
@@ -50,9 +50,9 @@ public sealed class SchemaInitializer
                 UpdatedAt TEXT NOT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS ExpenseLineItems (
-                ExpenseLineItemId TEXT PRIMARY KEY,
-                ExpenseId TEXT NOT NULL,
+            CREATE TABLE IF NOT EXISTS TransactionLineItems (
+                TransactionLineItemId TEXT PRIMARY KEY,
+                TransactionId TEXT NOT NULL,
                 CodeId TEXT NULL,
                 Description TEXT NULL,
                 Total NUMERIC NOT NULL CHECK (Total >= 0),
@@ -60,7 +60,7 @@ public sealed class SchemaInitializer
                 UpdatedAt TEXT NOT NULL,
                 DeletedAt TEXT NULL,
 
-                FOREIGN KEY (ExpenseId) REFERENCES Expenses(ExpenseId),
+                FOREIGN KEY (TransactionId) REFERENCES Transactions(TransactionId),
                 FOREIGN KEY (CodeId) REFERENCES AccountingCodes(CodeId)
             );
 
@@ -118,25 +118,25 @@ public sealed class SchemaInitializer
                 )
             );
 
-            CREATE TABLE IF NOT EXISTS ExpenseMatches (
-                ExpenseMatchId TEXT PRIMARY KEY,
-                ExpenseId TEXT NOT NULL,
+            CREATE TABLE IF NOT EXISTS TransactionMatches (
+                TransactionMatchId TEXT PRIMARY KEY,
+                TransactionId TEXT NOT NULL,
                 BankTransactionId TEXT NOT NULL,
                 MatchedAt TEXT NOT NULL,
                 Notes TEXT NULL,
                 CreatedAt TEXT NOT NULL,
                 DeletedAt TEXT NULL,
 
-                FOREIGN KEY (ExpenseId) REFERENCES Expenses(ExpenseId),
+                FOREIGN KEY (TransactionId) REFERENCES Transactions(TransactionId),
                 FOREIGN KEY (BankTransactionId) REFERENCES BankTransactions(BankTransactionId)
             );
 
-            CREATE UNIQUE INDEX IF NOT EXISTS UX_ExpenseMatches_Expense_Active
-            ON ExpenseMatches (ExpenseId)
+            CREATE UNIQUE INDEX IF NOT EXISTS UX_TransactionMatches_Transaction_Active
+            ON TransactionMatches (TransactionId)
             WHERE DeletedAt IS NULL;
 
-            CREATE UNIQUE INDEX IF NOT EXISTS UX_ExpenseMatches_BankTransaction_Active
-            ON ExpenseMatches (BankTransactionId)
+            CREATE UNIQUE INDEX IF NOT EXISTS UX_TransactionMatches_BankTransaction_Active
+            ON TransactionMatches (BankTransactionId)
             WHERE DeletedAt IS NULL;
 
             CREATE TABLE IF NOT EXISTS ImportBatches (
@@ -175,9 +175,9 @@ public sealed class SchemaInitializer
                 Notes TEXT NULL
             );
 
-            CREATE TABLE IF NOT EXISTS ExpenseDocuments (
-                ExpenseDocumentId TEXT PRIMARY KEY,
-                ExpenseId TEXT NOT NULL,
+            CREATE TABLE IF NOT EXISTS TransactionDocuments (
+                TransactionDocumentId TEXT PRIMARY KEY,
+                TransactionId TEXT NOT NULL,
                 FileName TEXT NOT NULL,
                 MimeType TEXT NOT NULL,
                 DocumentBlob BLOB NOT NULL,
@@ -186,7 +186,7 @@ public sealed class SchemaInitializer
                 UploadedAt TEXT NOT NULL,
                 DeletedAt TEXT NULL,
 
-                FOREIGN KEY (ExpenseId) REFERENCES Expenses(ExpenseId)
+                FOREIGN KEY (TransactionId) REFERENCES Transactions(TransactionId)
             );
 
             CREATE TABLE IF NOT EXISTS AuditLogEntries (

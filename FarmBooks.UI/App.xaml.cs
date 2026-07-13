@@ -49,24 +49,24 @@ public partial class App : Application
                         services.AddTransient<BackupRepository>();
                         services.AddTransient<BankRepository>();
                         services.AddTransient<DashboardRepository>();
-                        services.AddTransient<ExpenseDocumentRepository>();
-                        services.AddTransient<ExpenseLineItemRepository>();
-                        services.AddTransient<ExpenseMatchRepository>();
-                        services.AddTransient<ExpenseRepository>();
+                        services.AddTransient<TransactionDocumentRepository>();
+                        services.AddTransient<TransactionLineItemRepository>();
+                        services.AddTransient<TransactionMatchRepository>();
+                        services.AddTransient<TransactionRepository>();
                         services.AddTransient<ImportRepository>();
                         services.AddTransient<SettingsRepository>();
 
                         // Services
-                        services.AddTransient<IExpenseService, ExpenseService>();
+                        services.AddTransient<ITransactionService, TransactionService>();
                         services.AddTransient<IAccountingCodeService, AccountingCodeService>();
-                        services.AddTransient<IExpenseLineItemService, ExpenseLineItemService>();
+                        services.AddTransient<ITransactionLineItemService, TransactionLineItemService>();
 
                         services.AddTransient<AuditService>();
                         services.AddTransient<BackupService>();
                         services.AddTransient<BankService>();
                         services.AddTransient<DashboardService>();
-                        services.AddTransient<ExpenseDocumentService>();
-                        services.AddTransient<ExpenseMatchingService>();
+                        services.AddTransient<TransactionDocumentService>();
+                        services.AddTransient<TransactionMatchingService>();
                         services.AddTransient<ImportService>();
                         services.AddTransient<SettingsService>();
 
@@ -74,14 +74,14 @@ public partial class App : Application
                         services.AddSingleton<MainWindow>();
 
                         // Views
-                        services.AddTransient<ExpensesView>();
+                        services.AddTransient<TransactionsView>();
                         services.AddTransient<AccountingCodesView>();
 
                         // ViewModels
-                        services.AddTransient<ExpensesViewModel>();
-                        services.AddTransient<ExpenseLineItemsViewModel>();
-                        services.AddTransient<ExpenseListViewModel>();
-                        services.AddTransient<ExpenseEditorViewModel>();
+                        services.AddTransient<TransactionsViewModel>();
+                        services.AddTransient<TransactionLineItemsViewModel>();
+                        services.AddTransient<TransactionListViewModel>();
+                        services.AddTransient<TransactionEditorViewModel>();
                         services.AddTransient<AccountingCodesViewModel>();
                     }
                 )

@@ -7,20 +7,20 @@ namespace FarmBooks.UI;
 
 public partial class MainWindow : Window
 {
-    private readonly ExpensesView _expensesView;
+    private readonly TransactionsView _transactionsView;
     private readonly AccountingCodesView _accountingCodesView;
 
-    public MainWindow(ExpensesView expensesView, AccountingCodesView accountingCodesView)
+    public MainWindow(TransactionsView transactionsView, AccountingCodesView accountingCodesView)
     {
         InitializeComponent();
 
-        _expensesView = expensesView;
+        _transactionsView = transactionsView;
         _accountingCodesView = accountingCodesView;
 
-        MainContent.Content = _expensesView;
+        MainContent.Content = _transactionsView;
 
         CommandBindings.Add(
-            new CommandBinding(ApplicationCommands.New, (_, _) => OpenNewExpense())
+            new CommandBinding(ApplicationCommands.New, (_, _) => OpenNewTransaction())
         );
 
         InputBindings.Add(
@@ -28,9 +28,9 @@ public partial class MainWindow : Window
         );
     }
 
-    private void ExpensesMenuItem_Click(object sender, RoutedEventArgs e)
+    private void TransactionsMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        ShowExpenses();
+        ShowTransactions();
     }
 
     private void AccountingCodesMenuItem_Click(object sender, RoutedEventArgs e)
@@ -38,9 +38,9 @@ public partial class MainWindow : Window
         MainContent.Content = _accountingCodesView;
     }
 
-    private void NewExpenseMenuItem_Click(object sender, RoutedEventArgs e)
+    private void NewTransactionMenuItem_Click(object sender, RoutedEventArgs e)
     {
-        OpenNewExpense();
+        OpenNewTransaction();
     }
 
     private void ExitMenuItem_Click(object sender, RoutedEventArgs e)
@@ -48,21 +48,21 @@ public partial class MainWindow : Window
         Close();
     }
 
-    private void ShowExpenses()
+    private void ShowTransactions()
     {
-        MainContent.Content = _expensesView;
+        MainContent.Content = _transactionsView;
     }
 
-    private void OpenNewExpense()
+    private void OpenNewTransaction()
     {
-        ShowExpenses();
+        ShowTransactions();
 
         if (
-            _expensesView.DataContext is ExpensesViewModel viewModel
-            && viewModel.NewExpenseCommand.CanExecute(null)
+            _transactionsView.DataContext is TransactionsViewModel viewModel
+            && viewModel.NewTransactionCommand.CanExecute(null)
         )
         {
-            viewModel.NewExpenseCommand.Execute(null);
+            viewModel.NewTransactionCommand.Execute(null);
         }
     }
 }

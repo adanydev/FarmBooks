@@ -1,6 +1,6 @@
 using FarmBooks.Core.DTOs;
-using FarmBooks.Services;
 using FarmBooks.Data.Repositories;
+using FarmBooks.Services;
 
 namespace FarmBooks.Services;
 
@@ -15,45 +15,45 @@ public sealed class DashboardService
 
     public async Task<DashboardSummaryDto> GetSummaryAsync()
     {
-        var expenses = await _dashboardRepository.ListActiveExpensesAsync();
+        var transactions = await _dashboardRepository.ListActiveTransactionsAsync();
         var lineItems = await _dashboardRepository.ListActiveLineItemsAsync();
 
         var summary = new DashboardSummaryDto
         {
-            TotalExpenseCount = expenses.Count,
+            TotalTransactionCount = transactions.Count,
             TotalBankTransactionCount =
                 await _dashboardRepository.GetTotalBankTransactionCountAsync(),
 
-            UnmatchedExpenseCount =
-                await _dashboardRepository.GetUnmatchedExpenseCountAsync(),
+            UnmatchedTransactionCount =
+                await _dashboardRepository.GetUnmatchedTransactionCountAsync(),
 
             UnmatchedBankTransactionCount =
-                await _dashboardRepository.GetUnmatchedBankTransactionCountAsync()
+                await _dashboardRepository.GetUnmatchedBankTransactionCountAsync(),
         };
 
-        foreach (var expense in expenses)
+        foreach (var transaction in transactions)
         {
-            var expenseLineItems = lineItems
-                .Where(x => x.ExpenseId == expense.ExpenseId)
+            var transactionLineItems = lineItems
+                .Where(x => x.TransactionId == transaction.TransactionId)
                 .ToList();
 
-            var status = ExpenseStatusCalculator.Calculate(expense, expenseLineItems);
+            var status = TransactionStatusCalculator.Calculate(transaction, transactionLineItems);
 
             switch (status)
             {
-                case ExpenseStatus.NeedsLineItems:
+                case TransactionStatus.NeedsLineItems:
                     summary.NeedsLineItemsCount++;
                     break;
 
-                case ExpenseStatus.NeedsCodes:
+                case TransactionStatus.NeedsCodes:
                     summary.NeedsCodesCount++;
                     break;
 
-                case ExpenseStatus.NeedsReview:
+                case TransactionStatus.NeedsReview:
                     summary.NeedsReviewCount++;
                     break;
 
-                case ExpenseStatus.Complete:
+                case TransactionStatus.Complete:
                     summary.CompleteCount++;
                     break;
             }

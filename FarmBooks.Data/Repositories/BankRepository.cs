@@ -69,12 +69,12 @@ public sealed class BankRepository
         INSERT INTO BankTransactions (
             BankTransactionId, BankAccountId, BankStatementId, TransactionDate,
             Description, MoneyIn, MoneyOut, BalanceAfterTransaction,
-            Reference, ExpenseId, CreatedAt, UpdatedAt, DeletedAt
+            Reference, TransactionId, CreatedAt, UpdatedAt, DeletedAt
         )
         VALUES (
             @BankTransactionId, @BankAccountId, @BankStatementId, @TransactionDate,
             @Description, @MoneyIn, @MoneyOut, @BalanceAfterTransaction,
-            @Reference, @ExpenseId, @CreatedAt, @UpdatedAt, @DeletedAt
+            @Reference, @TransactionId, @CreatedAt, @UpdatedAt, @DeletedAt
         );
         """, transaction);
     }
@@ -93,31 +93,31 @@ public sealed class BankRepository
         return transactions.ToList();
     }
 
-    public async Task MatchExpenseAsync(string bankTransactionId, string ExpenseId)
+    public async Task MatchTransactionAsync(string bankTransactionId, string TransactionId)
     {
         using var connection = _db.CreateConnection();
 
         await connection.ExecuteAsync("""
         UPDATE BankTransactions
-        SET ExpenseId = @ExpenseId,
+        SET TransactionId = @TransactionId,
             UpdatedAt = @Now
         WHERE BankTransactionId = @BankTransactionId
           AND DeletedAt IS NULL;
         """, new
         {
             BankTransactionId = bankTransactionId,
-            ExpenseId = ExpenseId,
+            TransactionId = TransactionId,
             Now = DateTime.UtcNow
         });
     }
 
-    public async Task UnmatchExpenseAsync(string bankTransactionId)
+    public async Task UnmatchTransactionAsync(string bankTransactionId)
     {
         using var connection = _db.CreateConnection();
 
         await connection.ExecuteAsync("""
         UPDATE BankTransactions
-        SET ExpenseId = NULL,
+        SET TransactionId = NULL,
             UpdatedAt = @Now
         WHERE BankTransactionId = @BankTransactionId
           AND DeletedAt IS NULL;

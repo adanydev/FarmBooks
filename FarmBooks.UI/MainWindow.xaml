@@ -12,9 +12,9 @@
                 <Menu DockPanel.Dock="Top"
                       Height="30">
                         <MenuItem Header="_File">
-                                <MenuItem Header="_New Expense"
+                                <MenuItem Header="_New Transaction"
                                           InputGestureText="Ctrl+N"
-                                          Click="NewExpenseMenuItem_Click"/>
+                                          Click="NewTransactionMenuItem_Click"/>
 
                                 <Separator/>
 
@@ -22,8 +22,8 @@
                                           Click="ExitMenuItem_Click"/>
                         </MenuItem>
 
-                        <MenuItem Header="_Expenses"
-                                  Click="ExpensesMenuItem_Click"/>
+                        <MenuItem Header="_Transactions"
+                                  Click="TransactionsMenuItem_Click"/>
 
                         <MenuItem Header="_VAT Review"
                                   IsEnabled="False"/>
