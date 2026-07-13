@@ -22,7 +22,7 @@ public sealed class DashboardRepository
             SELECT *
             FROM Transactions
             WHERE DeletedAt IS NULL
-            ORDER BY TransactionDate DESC, CreatedAt DESC;
+            ORDER BY ReceiptDate DESC, CreatedAt DESC;
             """
         );
 

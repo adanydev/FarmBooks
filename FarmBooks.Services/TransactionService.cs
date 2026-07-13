@@ -32,8 +32,8 @@ public sealed class TransactionService : ITransactionService
     }
 
     public async Task<string> CreateTransactionAsync(
-        DateTime transactionDate,
-        DateTime? paidDate,
+        DateTime receiptDate,
+        DateTime? paymentDate,
         TransactionSourceType sourceType,
         string? documentNumber,
         string? businessName,
@@ -42,19 +42,13 @@ public sealed class TransactionService : ITransactionService
         string? notes
     )
     {
-        if (transactionDate == default)
-            throw new InvalidOperationException("Transaction date is required.");
-
-        if (total < 0)
-            throw new InvalidOperationException("Transaction total cannot be negative.");
-
         var now = DateTime.UtcNow;
 
         var transaction = new Transaction
         {
             TransactionId = Guid.NewGuid().ToString(),
-            TransactionDate = transactionDate,
-            PaidDate = paidDate,
+            ReceiptDate = receiptDate,
+            PaymentDate = paymentDate,
             SourceType = sourceType,
             DocumentNumber = documentNumber,
             BusinessName = businessName,
@@ -97,8 +91,8 @@ public sealed class TransactionService : ITransactionService
 
     public async Task UpdateTransactionAsync(
         string transactionId,
-        DateTime transactionDate,
-        DateTime? paidDate,
+        DateTime receiptDate,
+        DateTime? paymentDate,
         TransactionSourceType sourceType,
         string? documentNumber,
         string? businessName,
@@ -117,19 +111,13 @@ public sealed class TransactionService : ITransactionService
         if (transaction is null)
             throw new InvalidOperationException("Transaction not found.");
 
-        if (transactionDate == default)
-            throw new InvalidOperationException("Transaction date is required.");
-
-        if (total < 0)
-            throw new InvalidOperationException("Transaction total cannot be negative.");
-
         ValidateVat(vatApplicability, vatEntryMethod, vatC, vatS, isVatClassificationConfirmed);
 
         var oldTransaction = new Transaction
         {
             TransactionId = transaction.TransactionId,
-            TransactionDate = transaction.TransactionDate,
-            PaidDate = transaction.PaidDate,
+            ReceiptDate = transaction.ReceiptDate,
+            PaymentDate = transaction.PaymentDate,
             SourceType = transaction.SourceType,
             DocumentNumber = transaction.DocumentNumber,
             BusinessName = transaction.BusinessName,
@@ -146,8 +134,8 @@ public sealed class TransactionService : ITransactionService
             DeletedAt = transaction.DeletedAt,
         };
 
-        transaction.TransactionDate = transactionDate;
-        transaction.PaidDate = paidDate;
+        transaction.ReceiptDate = receiptDate;
+        transaction.PaymentDate = paymentDate;
         transaction.SourceType = sourceType;
         transaction.DocumentNumber = string.IsNullOrWhiteSpace(documentNumber)
             ? null
@@ -236,8 +224,8 @@ public sealed class TransactionService : ITransactionService
                 new TransactionListItemDto
                 {
                     TransactionId = transaction.TransactionId,
-                    TransactionDate = transaction.TransactionDate,
-                    PaidDate = transaction.PaidDate,
+                    ReceiptDate = transaction.ReceiptDate,
+                    PaymentDate = transaction.PaymentDate,
                     SourceType = transaction.SourceType.ToString(),
                     DocumentNumber = transaction.DocumentNumber,
                     BusinessName = transaction.BusinessName,
@@ -277,8 +265,8 @@ public sealed class TransactionService : ITransactionService
         return new TransactionDetailsDto
         {
             TransactionId = transaction.TransactionId,
-            TransactionDate = transaction.TransactionDate,
-            PaidDate = transaction.PaidDate,
+            ReceiptDate = transaction.ReceiptDate,
+            PaymentDate = transaction.PaymentDate,
             SourceType = transaction.SourceType.ToString(),
             DocumentNumber = transaction.DocumentNumber,
             BusinessName = transaction.BusinessName,

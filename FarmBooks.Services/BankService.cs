@@ -16,7 +16,8 @@ public sealed class BankService
         string name,
         string? bankName,
         decimal openingBalance,
-        DateTime openingBalanceDate)
+        DateTime openingBalanceDate
+    )
     {
         var now = DateTime.UtcNow;
 
@@ -29,7 +30,7 @@ public sealed class BankService
             OpeningBalanceDate = openingBalanceDate,
             IsActive = true,
             CreatedAt = now,
-            UpdatedAt = now
+            UpdatedAt = now,
         };
 
         await _bankRepository.CreateAccountAsync(account);
@@ -49,7 +50,8 @@ public sealed class BankService
         decimal? openingBalance,
         decimal closingBalance,
         string? statementNumber,
-        string? notes)
+        string? notes
+    )
     {
         var now = DateTime.UtcNow;
 
@@ -64,7 +66,7 @@ public sealed class BankService
             StatementNumber = statementNumber,
             Notes = notes,
             CreatedAt = now,
-            UpdatedAt = now
+            UpdatedAt = now,
         };
 
         await _bankRepository.CreateStatementAsync(statement);
@@ -75,15 +77,18 @@ public sealed class BankService
     public async Task<string> CreateTransactionAsync(
         string bankAccountId,
         string? bankStatementId,
-        DateTime transactionDate,
+        DateTime receiptDate,
         string? description,
         decimal moneyIn,
         decimal moneyOut,
         decimal? balanceAfterTransaction,
-        string? reference)
+        string? reference
+    )
     {
         if (moneyIn > 0 && moneyOut > 0)
-            throw new InvalidOperationException("Only MoneyIn or MoneyOut may be greater than zero.");
+            throw new InvalidOperationException(
+                "Only MoneyIn or MoneyOut may be greater than zero."
+            );
 
         var now = DateTime.UtcNow;
 
@@ -92,14 +97,14 @@ public sealed class BankService
             BankTransactionId = Guid.NewGuid().ToString(),
             BankAccountId = bankAccountId,
             BankStatementId = bankStatementId,
-            TransactionDate = transactionDate,
+            ReceiptDate = receiptDate,
             Description = description,
             MoneyIn = moneyIn,
             MoneyOut = moneyOut,
             BalanceAfterTransaction = balanceAfterTransaction,
             Reference = reference,
             CreatedAt = now,
-            UpdatedAt = now
+            UpdatedAt = now,
         };
 
         await _bankRepository.CreateTransactionAsync(transaction);

@@ -129,8 +129,8 @@ public sealed class TransactionListViewModel : ViewModelBase
         var defaultDate = DateTime.Today;
 
         var transactionId = await _transactionService.CreateTransactionAsync(
-            transactionDate: defaultDate,
-            paidDate: defaultDate,
+            receiptDate: defaultDate,
+            paymentDate: defaultDate,
             sourceType: TransactionSourceType.Receipt,
             documentNumber: null,
             businessName: null,
@@ -142,8 +142,8 @@ public sealed class TransactionListViewModel : ViewModelBase
         var row = new TransactionListRowViewModel
         {
             TransactionId = transactionId,
-            TransactionDate = defaultDate,
-            PaidDate = defaultDate,
+            ReceiptDate = defaultDate,
+            PaymentDate = defaultDate,
             SourceType = "Receipt",
             BusinessName = "",
             DocumentNumber = "",
@@ -201,8 +201,8 @@ public sealed class TransactionListViewModel : ViewModelBase
         return new TransactionListRowViewModel
         {
             TransactionId = transaction.TransactionId,
-            TransactionDate = transaction.TransactionDate,
-            PaidDate = transaction.PaidDate,
+            ReceiptDate = transaction.ReceiptDate,
+            PaymentDate = transaction.PaymentDate,
             SourceType = transaction.SourceType,
             DocumentNumber = transaction.DocumentNumber ?? "",
             BusinessName = transaction.BusinessName ?? "",
@@ -240,8 +240,8 @@ public sealed class TransactionListViewModel : ViewModelBase
         TransactionListRowViewModel destination
     )
     {
-        destination.TransactionDate = source.TransactionDate;
-        destination.PaidDate = source.PaidDate;
+        destination.ReceiptDate = source.ReceiptDate;
+        destination.PaymentDate = source.PaymentDate;
         destination.SourceType = source.SourceType;
         destination.DocumentNumber = source.DocumentNumber;
         destination.BusinessName = source.BusinessName;

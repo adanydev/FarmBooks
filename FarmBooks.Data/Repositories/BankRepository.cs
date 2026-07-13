@@ -17,28 +17,33 @@ public sealed class BankRepository
     {
         using var connection = _db.CreateConnection();
 
-        await connection.ExecuteAsync("""
-        INSERT INTO BankAccounts (
-            BankAccountId, Name, BankName, OpeningBalance,
-            OpeningBalanceDate, IsActive, CreatedAt, UpdatedAt, DeletedAt
-        )
-        VALUES (
-            @BankAccountId, @Name, @BankName, @OpeningBalance,
-            @OpeningBalanceDate, @IsActive, @CreatedAt, @UpdatedAt, @DeletedAt
+        await connection.ExecuteAsync(
+            """
+            INSERT INTO BankAccounts (
+                BankAccountId, Name, BankName, OpeningBalance,
+                OpeningBalanceDate, IsActive, CreatedAt, UpdatedAt, DeletedAt
+            )
+            VALUES (
+                @BankAccountId, @Name, @BankName, @OpeningBalance,
+                @OpeningBalanceDate, @IsActive, @CreatedAt, @UpdatedAt, @DeletedAt
+            );
+            """,
+            account
         );
-        """, account);
     }
 
     public async Task<IReadOnlyList<BankAccount>> ListAccountsAsync()
     {
         using var connection = _db.CreateConnection();
 
-        var accounts = await connection.QueryAsync<BankAccount>("""
-        SELECT *
-        FROM BankAccounts
-        WHERE DeletedAt IS NULL
-        ORDER BY Name;
-        """);
+        var accounts = await connection.QueryAsync<BankAccount>(
+            """
+            SELECT *
+            FROM BankAccounts
+            WHERE DeletedAt IS NULL
+            ORDER BY Name;
+            """
+        );
 
         return accounts.ToList();
     }
@@ -47,48 +52,56 @@ public sealed class BankRepository
     {
         using var connection = _db.CreateConnection();
 
-        await connection.ExecuteAsync("""
-        INSERT INTO BankStatements (
-            BankStatementId, BankAccountId, StatementStartDate, StatementEndDate,
-            OpeningBalance, ClosingBalance, StatementNumber, Notes,
-            CreatedAt, UpdatedAt, DeletedAt
-        )
-        VALUES (
-            @BankStatementId, @BankAccountId, @StatementStartDate, @StatementEndDate,
-            @OpeningBalance, @ClosingBalance, @StatementNumber, @Notes,
-            @CreatedAt, @UpdatedAt, @DeletedAt
+        await connection.ExecuteAsync(
+            """
+            INSERT INTO BankStatements (
+                BankStatementId, BankAccountId, StatementStartDate, StatementEndDate,
+                OpeningBalance, ClosingBalance, StatementNumber, Notes,
+                CreatedAt, UpdatedAt, DeletedAt
+            )
+            VALUES (
+                @BankStatementId, @BankAccountId, @StatementStartDate, @StatementEndDate,
+                @OpeningBalance, @ClosingBalance, @StatementNumber, @Notes,
+                @CreatedAt, @UpdatedAt, @DeletedAt
+            );
+            """,
+            statement
         );
-        """, statement);
     }
 
     public async Task CreateTransactionAsync(BankTransaction transaction)
     {
         using var connection = _db.CreateConnection();
 
-        await connection.ExecuteAsync("""
-        INSERT INTO BankTransactions (
-            BankTransactionId, BankAccountId, BankStatementId, TransactionDate,
-            Description, MoneyIn, MoneyOut, BalanceAfterTransaction,
-            Reference, TransactionId, CreatedAt, UpdatedAt, DeletedAt
-        )
-        VALUES (
-            @BankTransactionId, @BankAccountId, @BankStatementId, @TransactionDate,
-            @Description, @MoneyIn, @MoneyOut, @BalanceAfterTransaction,
-            @Reference, @TransactionId, @CreatedAt, @UpdatedAt, @DeletedAt
+        await connection.ExecuteAsync(
+            """
+            INSERT INTO BankTransactions (
+                BankTransactionId, BankAccountId, BankStatementId, ReceiptDate,
+                Description, MoneyIn, MoneyOut, BalanceAfterTransaction,
+                Reference, TransactionId, CreatedAt, UpdatedAt, DeletedAt
+            )
+            VALUES (
+                @BankTransactionId, @BankAccountId, @BankStatementId, @ReceiptDate,
+                @Description, @MoneyIn, @MoneyOut, @BalanceAfterTransaction,
+                @Reference, @TransactionId, @CreatedAt, @UpdatedAt, @DeletedAt
+            );
+            """,
+            transaction
         );
-        """, transaction);
     }
 
     public async Task<IReadOnlyList<BankTransaction>> ListTransactionsAsync()
     {
         using var connection = _db.CreateConnection();
 
-        var transactions = await connection.QueryAsync<BankTransaction>("""
-        SELECT *
-        FROM BankTransactions
-        WHERE DeletedAt IS NULL
-        ORDER BY TransactionDate DESC, CreatedAt DESC;
-        """);
+        var transactions = await connection.QueryAsync<BankTransaction>(
+            """
+            SELECT *
+            FROM BankTransactions
+            WHERE DeletedAt IS NULL
+            ORDER BY ReceiptDate DESC, CreatedAt DESC;
+            """
+        );
 
         return transactions.ToList();
     }
@@ -97,34 +110,36 @@ public sealed class BankRepository
     {
         using var connection = _db.CreateConnection();
 
-        await connection.ExecuteAsync("""
-        UPDATE BankTransactions
-        SET TransactionId = @TransactionId,
-            UpdatedAt = @Now
-        WHERE BankTransactionId = @BankTransactionId
-          AND DeletedAt IS NULL;
-        """, new
-        {
-            BankTransactionId = bankTransactionId,
-            TransactionId = TransactionId,
-            Now = DateTime.UtcNow
-        });
+        await connection.ExecuteAsync(
+            """
+            UPDATE BankTransactions
+            SET TransactionId = @TransactionId,
+                UpdatedAt = @Now
+            WHERE BankTransactionId = @BankTransactionId
+              AND DeletedAt IS NULL;
+            """,
+            new
+            {
+                BankTransactionId = bankTransactionId,
+                TransactionId = TransactionId,
+                Now = DateTime.UtcNow,
+            }
+        );
     }
 
     public async Task UnmatchTransactionAsync(string bankTransactionId)
     {
         using var connection = _db.CreateConnection();
 
-        await connection.ExecuteAsync("""
-        UPDATE BankTransactions
-        SET TransactionId = NULL,
-            UpdatedAt = @Now
-        WHERE BankTransactionId = @BankTransactionId
-          AND DeletedAt IS NULL;
-        """, new
-        {
-            BankTransactionId = bankTransactionId,
-            Now = DateTime.UtcNow
-        });
+        await connection.ExecuteAsync(
+            """
+            UPDATE BankTransactions
+            SET TransactionId = NULL,
+                UpdatedAt = @Now
+            WHERE BankTransactionId = @BankTransactionId
+              AND DeletedAt IS NULL;
+            """,
+            new { BankTransactionId = bankTransactionId, Now = DateTime.UtcNow }
+        );
     }
 }

@@ -5,7 +5,7 @@ public sealed class BankTransaction
     public string BankTransactionId { get; set; } = "";
     public string BankAccountId { get; set; } = "";
     public string? BankStatementId { get; set; }
-    public DateTime TransactionDate { get; set; }
+    public DateTime ReceiptDate { get; set; }
     public string? Description { get; set; }
     public decimal MoneyIn { get; set; }
     public decimal MoneyOut { get; set; }

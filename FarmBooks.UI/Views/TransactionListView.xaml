@@ -61,11 +61,11 @@
 
         <DataGrid.Columns>
             <DataGridTextColumn Header="Payment Date"
-                                Binding="{Binding PaidDate, StringFormat=d}"
+                                Binding="{Binding PaymentDate, StringFormat=d}"
                                 Width="95"/>
 
             <DataGridTextColumn Header="Receipt Date"
-                                Binding="{Binding TransactionDate, StringFormat=d}"
+                                Binding="{Binding ReceiptDate, StringFormat=d}"
                                 Width="95"/>
 
             <DataGridTextColumn Header="Business Name"

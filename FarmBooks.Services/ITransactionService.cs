@@ -6,8 +6,8 @@ namespace FarmBooks.Services;
 public interface ITransactionService
 {
     Task<string> CreateTransactionAsync(
-        DateTime transactionDate,
-        DateTime? paidDate,
+        DateTime receiptDate,
+        DateTime? paymentDate,
         TransactionSourceType sourceType,
         string? documentNumber,
         string? businessName,
@@ -18,8 +18,8 @@ public interface ITransactionService
 
     Task UpdateTransactionAsync(
         string transactionId,
-        DateTime transactionDate,
-        DateTime? paidDate,
+        DateTime receiptDate,
+        DateTime? paymentDate,
         TransactionSourceType sourceType,
         string? documentNumber,
         string? businessName,

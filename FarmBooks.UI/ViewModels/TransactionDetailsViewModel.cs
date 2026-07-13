@@ -9,8 +9,8 @@ namespace FarmBooks.UI.ViewModels;
 public sealed class TransactionDetailsViewModel : ViewModelBase, IDataErrorInfo
 {
     private string _transactionId = "";
-    private DateTime _transactionDate = DateTime.Today;
-    private DateTime? _paidDate;
+    private DateTime _receiptDate = DateTime.Today;
+    private DateTime? _paymentDate;
     private string _sourceType = "Receipt";
     private string _documentNumber = "";
     private string _businessName = "";
@@ -93,16 +93,16 @@ Current VAT Rate: {TaxConstants.VatRate:P0}
         set => SetProperty(ref _transactionId, value);
     }
 
-    public DateTime TransactionDate
+    public DateTime ReceiptDate
     {
-        get => _transactionDate;
-        set => SetProperty(ref _transactionDate, value);
+        get => _receiptDate;
+        set => SetProperty(ref _receiptDate, value);
     }
 
-    public DateTime? PaidDate
+    public DateTime? PaymentDate
     {
-        get => _paidDate;
-        set => SetProperty(ref _paidDate, value);
+        get => _paymentDate;
+        set => SetProperty(ref _paymentDate, value);
     }
 
     public string SourceType
@@ -219,7 +219,7 @@ Current VAT Rate: {TaxConstants.VatRate:P0}
     }
 
     public bool HasErrors =>
-        !string.IsNullOrWhiteSpace(this[nameof(TransactionDate)])
+        !string.IsNullOrWhiteSpace(this[nameof(ReceiptDate)])
         || !string.IsNullOrWhiteSpace(this[nameof(Total)]);
 
     public string Error => "";
@@ -230,8 +230,7 @@ Current VAT Rate: {TaxConstants.VatRate:P0}
         {
             return columnName switch
             {
-                nameof(TransactionDate) when TransactionDate == default =>
-                    "Transaction date is required.",
+                nameof(ReceiptDate) when ReceiptDate == default => "Transaction date is required.",
                 nameof(BusinessName) when string.IsNullOrWhiteSpace(BusinessName) =>
                     "Business name is required.",
 

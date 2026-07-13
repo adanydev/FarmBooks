@@ -34,12 +34,12 @@ public static class TransactionWorkflowStatusCalculator
     {
         var issues = new List<TransactionWorkflowIssueDto>();
 
-        if (transaction.PaidDate is null)
+        if (transaction.PaymentDate is null)
         {
             issues.Add(
                 new TransactionWorkflowIssueDto
                 {
-                    Code = TransactionWorkflowIssueCodes.MissingPaidDate,
+                    Code = TransactionWorkflowIssueCodes.MissingPaymentDate,
                     Message = TransactionWorkflowMessages.PaymentDateMissing,
                 }
             );

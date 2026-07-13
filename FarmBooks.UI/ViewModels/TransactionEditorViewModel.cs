@@ -146,8 +146,8 @@ public sealed class TransactionEditorViewModel : ViewModelBase
         var details = new TransactionDetailsViewModel
         {
             TransactionId = transaction.TransactionId,
-            TransactionDate = transaction.TransactionDate,
-            PaidDate = transaction.PaidDate,
+            ReceiptDate = transaction.ReceiptDate,
+            PaymentDate = transaction.PaymentDate,
             SourceType = transaction.SourceType,
             DocumentNumber = transaction.DocumentNumber ?? "",
             BusinessName = transaction.BusinessName ?? "",
@@ -189,8 +189,8 @@ public sealed class TransactionEditorViewModel : ViewModelBase
 
             await _transactionService.UpdateTransactionAsync(
                 transactionId: Details.TransactionId,
-                transactionDate: Details.TransactionDate,
-                paidDate: Details.PaidDate,
+                receiptDate: Details.ReceiptDate,
+                paymentDate: Details.PaymentDate,
                 sourceType: Enum.Parse<TransactionSourceType>(
                     Details.SourceType.Replace(" ", ""),
                     ignoreCase: true

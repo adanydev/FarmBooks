@@ -20,8 +20,8 @@ public sealed class SchemaInitializer
             CREATE TABLE IF NOT EXISTS Transactions
             (
                 TransactionId TEXT PRIMARY KEY,
-                TransactionDate TEXT NOT NULL,
-                PaidDate TEXT NULL,
+                ReceiptDate TEXT NOT NULL,
+                PaymentDate TEXT NULL,
                 SourceType INTEGER NOT NULL,
                 DocumentNumber TEXT NULL,
                 BusinessName TEXT NULL,
@@ -96,7 +96,7 @@ public sealed class SchemaInitializer
                 BankTransactionId TEXT PRIMARY KEY,
                 BankAccountId TEXT NOT NULL,
                 BankStatementId TEXT NULL,
-                TransactionDate TEXT NOT NULL,
+                ReceiptDate TEXT NOT NULL,
                 Description TEXT NULL,
                 MoneyIn NUMERIC NOT NULL DEFAULT 0,
                 MoneyOut NUMERIC NOT NULL DEFAULT 0,

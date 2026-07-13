@@ -2,7 +2,7 @@ namespace FarmBooks.Core.Constants;
 
 public static class TransactionWorkflowIssueCodes
 {
-    public const string MissingPaidDate = nameof(MissingPaidDate);
+    public const string MissingPaymentDate = nameof(MissingPaymentDate);
     public const string VatNotReviewed = nameof(VatNotReviewed);
     public const string VatNotSure = nameof(VatNotSure);
     public const string VatAmountMissing = nameof(VatAmountMissing);

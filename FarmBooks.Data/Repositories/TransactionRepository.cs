@@ -22,8 +22,8 @@ public sealed class TransactionRepository
             INSERT INTO Transactions
             (
                 TransactionId,
-                TransactionDate,
-                PaidDate,
+                ReceiptDate,
+                PaymentDate,
                 SourceType,
                 DocumentNumber,
                 BusinessName,
@@ -42,8 +42,8 @@ public sealed class TransactionRepository
             VALUES
             (
                 @TransactionId,
-                @TransactionDate,
-                @PaidDate,
+                @ReceiptDate,
+                @PaymentDate,
                 @SourceType,
                 @DocumentNumber,
                 @BusinessName,
@@ -71,8 +71,8 @@ public sealed class TransactionRepository
         const string sql = """
             SELECT
                 TransactionId,
-                TransactionDate,
-                PaidDate,
+                ReceiptDate,
+                PaymentDate,
                 SourceType,
                 DocumentNumber,
                 BusinessName,
@@ -102,8 +102,8 @@ public sealed class TransactionRepository
         const string sql = """
             SELECT
                 TransactionId,
-                TransactionDate,
-                PaidDate,
+                ReceiptDate,
+                PaymentDate,
                 SourceType,
                 DocumentNumber,
                 BusinessName,
@@ -124,7 +124,7 @@ public sealed class TransactionRepository
                 DeletedAt
             FROM Transactions
             WHERE DeletedAt IS NULL
-            ORDER BY PaidDate DESC, TransactionDate DESC;
+            ORDER BY PaymentDate DESC, ReceiptDate DESC;
             """;
 
         var transactions = await connection.QueryAsync<Transaction>(sql);
@@ -142,8 +142,8 @@ public sealed class TransactionRepository
             """
             UPDATE Transactions
             SET
-                TransactionDate = @TransactionDate,
-                PaidDate = @PaidDate,
+                ReceiptDate = @ReceiptDate,
+                PaymentDate = @PaymentDate,
                 SourceType = @SourceType,
                 DocumentNumber = @DocumentNumber,
                 BusinessName = @BusinessName,

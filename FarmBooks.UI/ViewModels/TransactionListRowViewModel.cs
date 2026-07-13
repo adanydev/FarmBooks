@@ -5,8 +5,8 @@ namespace FarmBooks.UI.ViewModels;
 public sealed class TransactionListRowViewModel : ViewModelBase
 {
     private string _transactionId = "";
-    private DateTime _transactionDate;
-    private DateTime? _paidDate;
+    private DateTime _receiptDate;
+    private DateTime? _paymentDate;
     private string _sourceType = "";
     private string _documentNumber = "";
     private string _businessName = "";
@@ -43,16 +43,16 @@ public sealed class TransactionListRowViewModel : ViewModelBase
         set => SetProperty(ref _transactionId, value);
     }
 
-    public DateTime TransactionDate
+    public DateTime ReceiptDate
     {
-        get => _transactionDate;
-        set => SetProperty(ref _transactionDate, value);
+        get => _receiptDate;
+        set => SetProperty(ref _receiptDate, value);
     }
 
-    public DateTime? PaidDate
+    public DateTime? PaymentDate
     {
-        get => _paidDate;
-        set => SetProperty(ref _paidDate, value);
+        get => _paymentDate;
+        set => SetProperty(ref _paymentDate, value);
     }
 
     public string SourceType
