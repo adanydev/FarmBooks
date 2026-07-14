@@ -32,8 +32,8 @@ public sealed class TransactionService : ITransactionService
     }
 
     public async Task<string> CreateTransactionAsync(
-        DateTime receiptDate,
-        DateTime? paymentDate,
+        DateTime? receiptDate,
+        DateTime paymentDate,
         TransactionSourceType sourceType,
         string? documentNumber,
         string? businessName,
@@ -91,8 +91,8 @@ public sealed class TransactionService : ITransactionService
 
     public async Task UpdateTransactionAsync(
         string transactionId,
-        DateTime receiptDate,
-        DateTime? paymentDate,
+        DateTime? receiptDate,
+        DateTime paymentDate,
         TransactionSourceType sourceType,
         string? documentNumber,
         string? businessName,
@@ -111,7 +111,7 @@ public sealed class TransactionService : ITransactionService
         if (transaction is null)
             throw new InvalidOperationException("Transaction not found.");
 
-        ValidateVat(vatApplicability, vatEntryMethod, vatC, vatS, isVatClassificationConfirmed);
+        ValidateVatSigns(total, vatC, vatS);
 
         var oldTransaction = new Transaction
         {
@@ -312,26 +312,19 @@ public sealed class TransactionService : ITransactionService
         };
     }
 
-    private static void ValidateVat(
-        VatApplicability vatApplicability,
-        VatEntryMethod vatEntryMethod,
-        decimal? vatC,
-        decimal? vatS,
-        bool isVatClassificationConfirmed
-    )
+    private static void ValidateVatSigns(decimal transactionTotal, decimal? vatC, decimal? vatS)
     {
-        if (vatC is < 0)
+        if (transactionTotal > 0m && ((vatC ?? 0m) < 0m || (vatS ?? 0m) < 0m))
         {
-            throw new InvalidOperationException("VATC cannot be negative.");
+            throw new InvalidOperationException("VAT amounts cannot be negative for an expense.");
         }
 
-        if (vatS is < 0)
+        if (transactionTotal < 0m && ((vatC ?? 0m) > 0m || (vatS ?? 0m) > 0m))
         {
-            throw new InvalidOperationException("VATS cannot be negative.");
+            throw new InvalidOperationException(
+                "VAT amounts must be negative for an income transaction."
+            );
         }
-
-        // Incomplete VAT work is allowed to save.
-        // The workflow calculator reports what still needs attention.
     }
 
     private static bool HasVatAmount(decimal? value)

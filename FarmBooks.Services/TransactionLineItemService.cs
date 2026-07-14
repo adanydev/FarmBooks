@@ -24,9 +24,9 @@ public sealed class TransactionLineItemService : ITransactionLineItemService
             throw new InvalidOperationException("Transaction ID is required.");
         }
 
-        if (total < 0)
+        if (total == 0)
         {
-            throw new InvalidOperationException("Line item total cannot be negative.");
+            throw new InvalidOperationException("Line item total cannot be zero.");
         }
 
         var now = DateTime.UtcNow;
@@ -71,9 +71,9 @@ public sealed class TransactionLineItemService : ITransactionLineItemService
             throw new InvalidOperationException("Transaction line item ID is required.");
         }
 
-        if (total < 0)
+        if (total == 0)
         {
-            throw new InvalidOperationException("Line item total cannot be negative.");
+            throw new InvalidOperationException("Line item total cannot be zero.");
         }
 
         var item = new TransactionLineItem

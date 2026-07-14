@@ -3,8 +3,8 @@ namespace FarmBooks.Core.DTOs.Transactions;
 public sealed class TransactionListItemDto
 {
     public string TransactionId { get; set; } = "";
-    public DateTime ReceiptDate { get; set; }
-    public DateTime? PaymentDate { get; set; }
+    public DateTime? ReceiptDate { get; set; }
+    public DateTime PaymentDate { get; set; }
     public string SourceType { get; set; } = "";
     public string? DocumentNumber { get; set; }
     public string? BusinessName { get; set; }

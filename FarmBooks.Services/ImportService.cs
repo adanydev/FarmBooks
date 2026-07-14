@@ -23,44 +23,52 @@ public sealed class ImportService
             SourceFile = sourceFile,
             Status = "Preview",
             Notes = "Test import batch",
-            CreatedAt = now
+            CreatedAt = now,
         };
 
         await _imports.CreateBatchAsync(batch);
 
-        await _imports.AddRowAsync(new ImportBatchRow
-        {
-            ImportBatchRowId = Guid.NewGuid().ToString(),
-            ImportBatchId = batch.ImportBatchId,
-            RowNumber = 1,
-            EntityType = "Transaction",
-            RawJson = JsonSerializer.Serialize(new
+        await _imports.AddRowAsync(
+            new ImportBatchRow
             {
-                Date = DateTime.Today,
-                BusinessName = "Farm Supply",
-                Total = 250.00m,
-                Code = "80"
-            }),
-            ValidationErrors = null,
-            CreatedAt = now
-        });
+                ImportBatchRowId = Guid.NewGuid().ToString(),
+                ImportBatchId = batch.ImportBatchId,
+                RowNumber = 1,
+                EntityType = "Transaction",
+                RawJson = JsonSerializer.Serialize(
+                    new
+                    {
+                        Date = DateTime.Today,
+                        BusinessName = "Farm Supply",
+                        Total = 250.00m,
+                        Code = "80",
+                    }
+                ),
+                ValidationErrors = null,
+                CreatedAt = now,
+            }
+        );
 
-        await _imports.AddRowAsync(new ImportBatchRow
-        {
-            ImportBatchRowId = Guid.NewGuid().ToString(),
-            ImportBatchId = batch.ImportBatchId,
-            RowNumber = 2,
-            EntityType = "Transaction",
-            RawJson = JsonSerializer.Serialize(new
+        await _imports.AddRowAsync(
+            new ImportBatchRow
             {
-                Date = "",
-                BusinessName = "",
-                Total = -10,
-                Code = "UNKNOWN"
-            }),
-            ValidationErrors = "Missing date; total cannot be negative; unknown code",
-            CreatedAt = now
-        });
+                ImportBatchRowId = Guid.NewGuid().ToString(),
+                ImportBatchId = batch.ImportBatchId,
+                RowNumber = 2,
+                EntityType = "Transaction",
+                RawJson = JsonSerializer.Serialize(
+                    new
+                    {
+                        Date = "",
+                        BusinessName = "",
+                        Total = -10,
+                        Code = "UNKNOWN",
+                    }
+                ),
+                ValidationErrors = "Missing date; total cannot be negative; unknown code",
+                CreatedAt = now,
+            }
+        );
 
         return batch.ImportBatchId;
     }

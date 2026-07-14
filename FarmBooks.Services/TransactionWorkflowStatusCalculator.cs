@@ -34,17 +34,6 @@ public static class TransactionWorkflowStatusCalculator
     {
         var issues = new List<TransactionWorkflowIssueDto>();
 
-        if (transaction.PaymentDate is null)
-        {
-            issues.Add(
-                new TransactionWorkflowIssueDto
-                {
-                    Code = TransactionWorkflowIssueCodes.MissingPaymentDate,
-                    Message = TransactionWorkflowMessages.PaymentDateMissing,
-                }
-            );
-        }
-
         if (transaction.VatApplicability == VatApplicability.NotSure)
         {
             issues.Add(

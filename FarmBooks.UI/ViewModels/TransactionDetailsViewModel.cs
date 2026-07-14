@@ -9,8 +9,8 @@ namespace FarmBooks.UI.ViewModels;
 public sealed class TransactionDetailsViewModel : ViewModelBase, IDataErrorInfo
 {
     private string _transactionId = "";
-    private DateTime _receiptDate = DateTime.Today;
-    private DateTime? _paymentDate;
+    private DateTime? _receiptDate;
+    private DateTime _paymentDate;
     private string _sourceType = "Receipt";
     private string _documentNumber = "";
     private string _businessName = "";
@@ -93,13 +93,13 @@ Current VAT Rate: {TaxConstants.VatRate:P0}
         set => SetProperty(ref _transactionId, value);
     }
 
-    public DateTime ReceiptDate
+    public DateTime? ReceiptDate
     {
         get => _receiptDate;
         set => SetProperty(ref _receiptDate, value);
     }
 
-    public DateTime? PaymentDate
+    public DateTime PaymentDate
     {
         get => _paymentDate;
         set => SetProperty(ref _paymentDate, value);
@@ -219,7 +219,8 @@ Current VAT Rate: {TaxConstants.VatRate:P0}
     }
 
     public bool HasErrors =>
-        !string.IsNullOrWhiteSpace(this[nameof(ReceiptDate)])
+        !string.IsNullOrWhiteSpace(this[nameof(PaymentDate)])
+        || !string.IsNullOrWhiteSpace(this[nameof(BusinessName)])
         || !string.IsNullOrWhiteSpace(this[nameof(Total)]);
 
     public string Error => "";
@@ -230,11 +231,11 @@ Current VAT Rate: {TaxConstants.VatRate:P0}
         {
             return columnName switch
             {
-                nameof(ReceiptDate) when ReceiptDate == default => "Transaction date is required.",
+                nameof(PaymentDate) when ReceiptDate == default => "Transaction date is required.",
                 nameof(BusinessName) when string.IsNullOrWhiteSpace(BusinessName) =>
                     "Business name is required.",
 
-                nameof(Total) when Total < 0 => "Total cannot be negative.",
+                nameof(Total) when Total == 0m => "Total cannot be zero.",
 
                 _ => "",
             };
@@ -257,7 +258,7 @@ Current VAT Rate: {TaxConstants.VatRate:P0}
 
     private decimal CalculateVatFromTotal()
     {
-        if (Total <= 0m)
+        if (Total == 0m)
             return 0m;
 
         var vat = (Total / TaxConstants.VatMultiplier) * TaxConstants.VatRate;
