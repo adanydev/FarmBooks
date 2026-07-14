@@ -87,6 +87,21 @@
                                       StringFormat={}{0} shown}"
                        VerticalAlignment="Center"
                        Foreground="#6B7280"/>
+
+            <StackPanel Orientation="Horizontal">
+                <Button Content="↑"
+                        Width="34"
+                        Height="30"
+                        Margin="0,0,6,0"
+                        ToolTip="Move selected transaction up within its payment date"
+                        Command="{Binding MoveTransactionUpCommand}"/>
+
+                <Button Content="↓"
+                        Width="34"
+                        Height="30"
+                        ToolTip="Move selected transaction down within its payment date"
+                        Command="{Binding MoveTransactionDownCommand}"/>
+            </StackPanel>
         </Grid>
 
         <!-- Main content -->

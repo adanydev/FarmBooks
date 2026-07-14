@@ -80,7 +80,7 @@ public sealed class SchemaInitializer
                 VATS NUMERIC NULL,
                 IsVatClassificationConfirmed INTEGER NOT NULL DEFAULT 0,
                 
-                StatementOrder INTEGER NULL,
+                StatementOrder INTEGER NOT NULL DEFAULT 0,
 
                 Notes TEXT NULL,
                 CreatedAt TEXT NOT NULL,

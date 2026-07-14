@@ -13,7 +13,6 @@ public interface ITransactionService
         string? businessName,
         string? description,
         decimal total,
-        int statementOrder,
         string? notes
     );
 
@@ -31,7 +30,6 @@ public interface ITransactionService
         decimal? vatC,
         decimal? vatS,
         bool isVatClassificationConfirmed,
-        int statementOrder,
         string? notes
     );
 
@@ -40,4 +38,6 @@ public interface ITransactionService
     Task<TransactionDetailsDto?> GetTransactionDetailsAsync(string transactionId);
 
     Task DeleteTransactionAsync(string transactionId);
+
+    Task MoveTransactionAsync(string transactionId, TransactionMoveDirection direction);
 }

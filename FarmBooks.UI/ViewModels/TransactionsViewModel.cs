@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using FarmBooks.Core.Models;
 using FarmBooks.Services;
 using FarmBooks.UI.Infrastructure;
 using FarmBooks.UI.Services;
@@ -28,6 +29,8 @@ public sealed class TransactionsViewModel : ViewModelBase
         _confirmationService = confirmationService;
 
         NewTransactionCommand = new RelayCommand(AddNewTransaction);
+        MoveTransactionUpCommand = new AsyncRelayCommand(MoveSelectedTransactionUpAsync);
+        MoveTransactionDownCommand = new AsyncRelayCommand(MoveSelectedTransactionDownAsync);
 
         DeleteTransactionCommand = new AsyncRelayCommand(DeleteSelectedTransactionAsync);
 
@@ -64,6 +67,9 @@ public sealed class TransactionsViewModel : ViewModelBase
     public ICommand NewTransactionCommand { get; }
 
     public ICommand DeleteTransactionCommand { get; }
+
+    public ICommand MoveTransactionUpCommand { get; }
+    public ICommand MoveTransactionDownCommand { get; }
 
     public async Task InitializeAsync()
     {
@@ -168,6 +174,46 @@ public sealed class TransactionsViewModel : ViewModelBase
         catch (Exception ex)
         {
             LoadMessage = $"Could not delete transaction: {ex.Message}";
+        }
+    }
+
+    private async Task MoveSelectedTransactionUpAsync()
+    {
+        await MoveSelectedTransactionAsync(TransactionMoveDirection.Up);
+    }
+
+    private async Task MoveSelectedTransactionDownAsync()
+    {
+        await MoveSelectedTransactionAsync(TransactionMoveDirection.Down);
+    }
+
+    private async Task MoveSelectedTransactionAsync(TransactionMoveDirection direction)
+    {
+        var selected = SelectedTransaction;
+
+        if (selected is null)
+            return;
+
+        try
+        {
+            LoadMessage =
+                direction == TransactionMoveDirection.Up
+                    ? "Moving transaction up..."
+                    : "Moving transaction down...";
+
+            await _transactionService.MoveTransactionAsync(selected.TransactionId, direction);
+
+            await TransactionList.ReloadAsync();
+
+            SelectedTransaction = TransactionList.Transactions.FirstOrDefault(transaction =>
+                transaction.TransactionId == selected.TransactionId
+            );
+
+            LoadMessage = "";
+        }
+        catch (Exception ex)
+        {
+            LoadMessage = $"Could not move transaction: {ex.Message}";
         }
     }
 }

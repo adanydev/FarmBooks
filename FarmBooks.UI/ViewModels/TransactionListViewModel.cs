@@ -109,6 +109,11 @@ public sealed class TransactionListViewModel : ViewModelBase
         return value?.Contains(search, StringComparison.OrdinalIgnoreCase) == true;
     }
 
+    public async Task ReloadAsync()
+    {
+        await LoadAsync();
+    }
+
     public async Task LoadAsync()
     {
         var transactions = await _transactionService.GetTransactionListAsync();
@@ -128,42 +133,19 @@ public sealed class TransactionListViewModel : ViewModelBase
         DateTime? defaultPaymentDate
     )
     {
-        var paymentDate = defaultPaymentDate?.Date;
-
         var transactionId = await _transactionService.CreateTransactionAsync(
             receiptDate: null,
-            paymentDate: paymentDate,
+            paymentDate: defaultPaymentDate,
             sourceType: TransactionSourceType.Receipt,
             documentNumber: null,
             businessName: null,
             description: null,
             total: 0m,
-            statementOrder: 0,
             notes: null
         );
 
-        var row = new TransactionListRowViewModel
-        {
-            TransactionId = transactionId,
-            ReceiptDate = null,
-            PaymentDate = paymentDate,
-            SourceType = "Receipt",
-            BusinessName = "",
-            DocumentNumber = "",
-            Description = "",
-            Total = 0m,
-            Status = "Needs Review",
-            Matched = false,
-            LineItemCount = 0,
-            DocumentCount = 0,
-        };
-
-        Transactions.Insert(0, row);
-
-        FilteredTransactions.Refresh();
-        OnPropertyChanged(nameof(VisibleTransactionCount));
-
-        return row;
+        return await RefreshTransactionAsync(transactionId)
+            ?? throw new InvalidOperationException("The new transaction could not be loaded.");
     }
 
     public async Task<TransactionListRowViewModel?> RefreshTransactionAsync(string transactionId)
@@ -215,6 +197,7 @@ public sealed class TransactionListViewModel : ViewModelBase
             Matched = transaction.IsMatched,
             LineItemCount = transaction.LineItemCount,
             DocumentCount = transaction.DocumentCount,
+            StatementOrder = transaction.StatementOrder,
 
             IsVatReady = transaction.IsVatReady,
             IsTaxReady = transaction.IsTaxReady,
@@ -275,5 +258,6 @@ public sealed class TransactionListViewModel : ViewModelBase
 
         destination.VatIssuesToolTip = source.VatIssuesToolTip;
         destination.TaxIssuesToolTip = source.TaxIssuesToolTip;
+        destination.StatementOrder = source.StatementOrder;
     }
 }

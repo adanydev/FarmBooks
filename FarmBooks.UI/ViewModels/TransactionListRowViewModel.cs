@@ -19,7 +19,7 @@ public sealed class TransactionListRowViewModel : ViewModelBase
     private bool _isVatReady;
     private bool _isTaxReady;
 
-    public int StatementOrder { get; set; }
+    private int _statementOrder;
 
     private int _vatIssueCount;
     private int _taxIssueCount;
@@ -157,6 +157,12 @@ public sealed class TransactionListRowViewModel : ViewModelBase
                 OnPropertyChanged(nameof(TaxStatusText));
             }
         }
+    }
+
+    public int StatementOrder
+    {
+        get => _statementOrder;
+        set => SetProperty(ref _statementOrder, value);
     }
 
     public string VatStatusText => IsVatReady ? "✓" : $"{VatIssueCount}";

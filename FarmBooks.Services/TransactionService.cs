@@ -39,11 +39,11 @@ public sealed class TransactionService : ITransactionService
         string? businessName,
         string? description,
         decimal total,
-        int statementOrder,
         string? notes
     )
     {
         var now = DateTime.UtcNow;
+        var statementOrder = await _transactions.GetNextStatementOrderAsync(paymentDate);
 
         var transaction = new Transaction
         {
@@ -105,7 +105,6 @@ public sealed class TransactionService : ITransactionService
         decimal? vatC,
         decimal? vatS,
         bool isVatClassificationConfirmed,
-        int statementOrder,
         string? notes
     )
     {
@@ -115,10 +114,6 @@ public sealed class TransactionService : ITransactionService
             throw new InvalidOperationException("Transaction not found.");
 
         ValidateVatSigns(total, vatC, vatS);
-        if (statementOrder is < 1)
-        {
-            throw new InvalidOperationException("Statement order must be at least 1.");
-        }
 
         var oldTransaction = new Transaction
         {
@@ -176,7 +171,6 @@ public sealed class TransactionService : ITransactionService
             transaction.IsVatClassificationConfirmed = false;
         }
 
-        transaction.StatementOrder = statementOrder;
         transaction.Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
 
         await _transactions.UpdateAsync(transaction);
@@ -291,6 +285,7 @@ public sealed class TransactionService : ITransactionService
             Status = status.ToString(),
             WorkflowStatus = workflow,
             IsMatched = isMatched,
+            StatementOrder = transaction.StatementOrder,
 
             LineItems = lineItems
                 .Select(x =>
@@ -320,6 +315,70 @@ public sealed class TransactionService : ITransactionService
                 })
                 .ToList(),
         };
+    }
+
+    public async Task MoveTransactionAsync(string transactionId, TransactionMoveDirection direction)
+    {
+        var current = await _transactions.GetAsync(transactionId);
+
+        if (current is null)
+        {
+            throw new InvalidOperationException("Transaction not found.");
+        }
+
+        if (current.PaymentDate is null)
+        {
+            throw new InvalidOperationException(
+                "A transaction needs a payment date before it can be reordered."
+            );
+        }
+
+        var transactions = (await _transactions.ListForPaymentDateAsync(current.PaymentDate.Value))
+            .OrderBy(transaction => transaction.StatementOrder)
+            .ThenBy(transaction => transaction.CreatedAt)
+            .ToList();
+
+        var currentIndex = transactions.FindIndex(transaction =>
+            transaction.TransactionId == transactionId
+        );
+
+        if (currentIndex < 0)
+            return;
+
+        var targetIndex =
+            direction == TransactionMoveDirection.Up ? currentIndex - 1 : currentIndex + 1;
+
+        if (targetIndex < 0 || targetIndex >= transactions.Count)
+        {
+            return;
+        }
+
+        var target = transactions[targetIndex];
+
+        await _transactions.UpdateStatementOrdersAsync(
+            current.TransactionId,
+            target.StatementOrder,
+            target.TransactionId,
+            current.StatementOrder
+        );
+
+        await _auditService.WriteAsync(
+            "Transaction",
+            transactionId,
+            direction == TransactionMoveDirection.Up ? "Moved Up" : "Moved Down",
+            new
+            {
+                current.StatementOrder,
+                TargetTransactionId = target.TransactionId,
+                TargetStatementOrder = target.StatementOrder,
+            },
+            new
+            {
+                StatementOrder = target.StatementOrder,
+                TargetTransactionId = target.TransactionId,
+                TargetStatementOrder = current.StatementOrder,
+            }
+        );
     }
 
     private static void ValidateVatSigns(decimal transactionTotal, decimal? vatC, decimal? vatS)

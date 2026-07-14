@@ -204,7 +204,6 @@ public sealed class TransactionEditorViewModel : ViewModelBase
                 vatC: Details.VATC,
                 vatS: Details.VATS,
                 isVatClassificationConfirmed: Details.IsVatClassificationConfirmed,
-                0,
                 notes: Details.Notes
             );
 
