@@ -27,7 +27,6 @@ public sealed class TransactionDetailsViewModel : ViewModelBase, IDataErrorInfo
 
     private string _notes = "";
 
-    private int? _statementOrder;
     private string _status = "";
 
     private bool _suppressVatConfirmationReset;
