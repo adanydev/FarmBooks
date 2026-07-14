@@ -79,6 +79,8 @@ public sealed class SchemaInitializer
                 VATC NUMERIC NULL,
                 VATS NUMERIC NULL,
                 IsVatClassificationConfirmed INTEGER NOT NULL DEFAULT 0,
+                
+                StatementOrder INTEGER NULL,
 
                 Notes TEXT NULL,
                 CreatedAt TEXT NOT NULL,

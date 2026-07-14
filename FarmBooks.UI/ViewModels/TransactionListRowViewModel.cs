@@ -19,6 +19,8 @@ public sealed class TransactionListRowViewModel : ViewModelBase
     private bool _isVatReady;
     private bool _isTaxReady;
 
+    public int StatementOrder { get; set; }
+
     private int _vatIssueCount;
     private int _taxIssueCount;
     private string _vatIssuesToolTip = "";

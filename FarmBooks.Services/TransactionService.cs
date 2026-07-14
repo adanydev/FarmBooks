@@ -39,6 +39,7 @@ public sealed class TransactionService : ITransactionService
         string? businessName,
         string? description,
         decimal total,
+        int statementOrder,
         string? notes
     )
     {
@@ -54,6 +55,7 @@ public sealed class TransactionService : ITransactionService
             BusinessName = businessName,
             Description = description,
             Total = total,
+            StatementOrder = statementOrder,
             Notes = notes,
             CreatedAt = now,
             UpdatedAt = now,
@@ -103,6 +105,7 @@ public sealed class TransactionService : ITransactionService
         decimal? vatC,
         decimal? vatS,
         bool isVatClassificationConfirmed,
+        int statementOrder,
         string? notes
     )
     {
@@ -112,6 +115,10 @@ public sealed class TransactionService : ITransactionService
             throw new InvalidOperationException("Transaction not found.");
 
         ValidateVatSigns(total, vatC, vatS);
+        if (statementOrder is < 1)
+        {
+            throw new InvalidOperationException("Statement order must be at least 1.");
+        }
 
         var oldTransaction = new Transaction
         {
@@ -128,6 +135,7 @@ public sealed class TransactionService : ITransactionService
             VATC = transaction.VATC,
             VATS = transaction.VATS,
             IsVatClassificationConfirmed = transaction.IsVatClassificationConfirmed,
+            StatementOrder = transaction.StatementOrder,
             Notes = transaction.Notes,
             CreatedAt = transaction.CreatedAt,
             UpdatedAt = transaction.UpdatedAt,
@@ -168,6 +176,7 @@ public sealed class TransactionService : ITransactionService
             transaction.IsVatClassificationConfirmed = false;
         }
 
+        transaction.StatementOrder = statementOrder;
         transaction.Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
 
         await _transactions.UpdateAsync(transaction);
@@ -241,6 +250,7 @@ public sealed class TransactionService : ITransactionService
                     IsMatched = isMatched,
                     LineItemCount = lineItems.Count,
                     DocumentCount = documentCount,
+                    StatementOrder = transaction.StatementOrder,
                 }
             );
         }

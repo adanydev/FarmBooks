@@ -35,6 +35,7 @@ public sealed class TransactionRepository
                 VATS,
                 IsVatClassificationConfirmed,
                 Notes,
+                StatementOrder,
                 CreatedAt,
                 UpdatedAt,
                 DeletedAt
@@ -55,6 +56,7 @@ public sealed class TransactionRepository
                 @VATS,
                 @IsVatClassificationConfirmed,
                 @Notes,
+                @StatementOrder,
                 @CreatedAt,
                 @UpdatedAt,
                 @DeletedAt
@@ -83,6 +85,7 @@ public sealed class TransactionRepository
                 CAST(VATC AS REAL) AS VATC,
                 CAST(VATS AS REAL) AS VATS,
                 IsVatClassificationConfirmed,
+                StatementOrder,
                 Notes,
                 CreatedAt,
                 UpdatedAt,
@@ -118,13 +121,17 @@ public sealed class TransactionRepository
                 CAST(VATS AS REAL) AS VATS,
 
                 IsVatClassificationConfirmed,
+                StatementOrder,
                 Notes,
                 CreatedAt,
                 UpdatedAt,
                 DeletedAt
             FROM Transactions
             WHERE DeletedAt IS NULL
-            ORDER BY PaymentDate DESC, ReceiptDate DESC;
+            ORDER BY PaymentDate DESC,
+            CASE WHEN StatementOrder IS NULL THEN 1 ELSE 0 END,
+            StatementOrder ASC,
+            CreatedAt ASC;
             """;
 
         var transactions = await connection.QueryAsync<Transaction>(sql);
@@ -155,6 +162,7 @@ public sealed class TransactionRepository
                 VATS = @VATS,
                 IsVatClassificationConfirmed =
                     @IsVatClassificationConfirmed,
+                StatementOrder = @StatementOrder,
                 Notes = @Notes,
                 UpdatedAt = @UpdatedAt
             WHERE TransactionId = @TransactionId

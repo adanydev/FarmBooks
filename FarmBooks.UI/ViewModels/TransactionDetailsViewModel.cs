@@ -26,6 +26,8 @@ public sealed class TransactionDetailsViewModel : ViewModelBase, IDataErrorInfo
     private bool _isVatClassificationConfirmed;
 
     private string _notes = "";
+
+    private int? _statementOrder;
     private string _status = "";
 
     private bool _suppressVatConfirmationReset;
@@ -35,7 +37,7 @@ public sealed class TransactionDetailsViewModel : ViewModelBase, IDataErrorInfo
 Calculate VAT
 
 Formula:
-(Total ÷ (1 + VAT Rate)) × VAT Rate
+(Total ÷ (1 + VAT Rate)) * VAT Rate
 
 Current VAT Rate: {TaxConstants.VatRate:P0}
 """;

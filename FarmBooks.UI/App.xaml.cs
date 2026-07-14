@@ -7,6 +7,7 @@ using FarmBooks.Data.Database;
 using FarmBooks.Data.Repositories;
 using FarmBooks.Services;
 using FarmBooks.UI.Infrastructure;
+using FarmBooks.UI.Services;
 using FarmBooks.UI.ViewModels;
 using FarmBooks.UI.Views;
 using Microsoft.Extensions.DependencyInjection;
@@ -121,6 +122,9 @@ public partial class App : Application
                         services.AddTransient<TransactionListViewModel>();
                         services.AddTransient<TransactionEditorViewModel>();
                         services.AddTransient<AccountingCodesViewModel>();
+
+                        //UI Services
+                        services.AddSingleton<IConfirmationService, ConfirmationService>();
                     }
                 )
                 .Build();

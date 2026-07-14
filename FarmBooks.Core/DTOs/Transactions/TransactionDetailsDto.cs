@@ -26,6 +26,7 @@ public sealed class TransactionDetailsDto
 
     public bool IsVatClassificationConfirmed { get; set; }
 
+    public int StatementOrder { get; set; }
     public string? Notes { get; set; }
 
     public string Status { get; set; } = "";

@@ -1,10 +1,14 @@
 using System.Windows.Input;
+using FarmBooks.Services;
 using FarmBooks.UI.Infrastructure;
+using FarmBooks.UI.Services;
 
 namespace FarmBooks.UI.ViewModels;
 
 public sealed class TransactionsViewModel : ViewModelBase
 {
+    private readonly ITransactionService _transactionService;
+    private readonly IConfirmationService _confirmationService;
     private TransactionListRowViewModel? _selectedTransaction;
     private bool _isInitialized;
     private bool _isLoading;
@@ -12,13 +16,20 @@ public sealed class TransactionsViewModel : ViewModelBase
 
     public TransactionsViewModel(
         TransactionListViewModel transactionList,
-        TransactionEditorViewModel transactionEditor
+        TransactionEditorViewModel transactionEditor,
+        ITransactionService transactionService,
+        IConfirmationService confirmationService
     )
     {
         TransactionList = transactionList;
         TransactionEditor = transactionEditor;
 
+        _transactionService = transactionService;
+        _confirmationService = confirmationService;
+
         NewTransactionCommand = new RelayCommand(AddNewTransaction);
+
+        DeleteTransactionCommand = new AsyncRelayCommand(DeleteSelectedTransactionAsync);
 
         TransactionEditor.TransactionSaved += TransactionEditor_TransactionSaved;
     }
@@ -51,6 +62,8 @@ public sealed class TransactionsViewModel : ViewModelBase
     }
 
     public ICommand NewTransactionCommand { get; }
+
+    public ICommand DeleteTransactionCommand { get; }
 
     public async Task InitializeAsync()
     {
@@ -107,5 +120,54 @@ public sealed class TransactionsViewModel : ViewModelBase
         SelectedTransaction = TransactionList
             .FilteredTransactions.Cast<TransactionListRowViewModel>()
             .FirstOrDefault();
+    }
+
+    private async Task DeleteSelectedTransactionAsync()
+    {
+        var transaction = SelectedTransaction;
+
+        if (transaction is null)
+            return;
+
+        var businessName = string.IsNullOrWhiteSpace(transaction.BusinessName)
+            ? "(No business name)"
+            : transaction.BusinessName;
+
+        var paymentDate = transaction.PaymentDate?.ToString("dd/MM/yyyy") ?? "(No payment date)";
+
+        var confirmed = _confirmationService.Confirm(
+            $"""
+            Delete this transaction?
+
+            Business: {businessName}
+            Payment date: {paymentDate}
+            Total: {transaction.Total:N2}
+
+            The transaction will be removed from the transaction list.
+            """,
+            "Delete Transaction"
+        );
+
+        if (!confirmed)
+            return;
+
+        try
+        {
+            LoadMessage = "Deleting transaction...";
+
+            await _transactionService.DeleteTransactionAsync(transaction.TransactionId);
+
+            TransactionList.RemoveTransaction(transaction.TransactionId);
+
+            SelectedTransaction = TransactionList
+                .FilteredTransactions.Cast<TransactionListRowViewModel>()
+                .FirstOrDefault();
+
+            LoadMessage = "";
+        }
+        catch (Exception ex)
+        {
+            LoadMessage = $"Could not delete transaction: {ex.Message}";
+        }
     }
 }

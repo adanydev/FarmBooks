@@ -24,6 +24,7 @@ public sealed class Transaction
 
     public bool IsVatClassificationConfirmed { get; set; }
 
+    public int StatementOrder { get; set; }
     public string? Notes { get; set; }
 
     public DateTime CreatedAt { get; set; }

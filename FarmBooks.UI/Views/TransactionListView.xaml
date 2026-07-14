@@ -57,8 +57,17 @@
               GridLinesVisibility="Horizontal"
               HeadersVisibility="Column"
               AlternatingRowBackground="#F9FAFB"
-              BorderThickness="0">
+              BorderThickness="0"
+              Tag="{Binding DataContext,
+                        RelativeSource={RelativeSource AncestorType=Window}}">
 
+        <DataGrid.ContextMenu>
+            <ContextMenu DataContext="{Binding PlacementTarget.DataContext,
+                                       RelativeSource={RelativeSource Self}}">
+                <MenuItem Header="Delete Transaction"
+                          Command="{Binding DeleteTransactionCommand}"/>
+            </ContextMenu>
+        </DataGrid.ContextMenu>
         <DataGrid.Columns>
             <DataGridTextColumn Header="Payment Date"
                                 Binding="{Binding PaymentDate,

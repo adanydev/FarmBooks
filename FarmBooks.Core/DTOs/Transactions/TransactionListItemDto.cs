@@ -18,6 +18,7 @@ public sealed class TransactionListItemDto
     public bool IsTaxReady { get; set; }
     public int VatIssueCount { get; set; }
     public int TaxIssueCount { get; set; }
+    public int StatementOrder { get; set; }
     public IReadOnlyList<TransactionWorkflowIssueDto> VatIssues { get; set; } = [];
     public IReadOnlyList<TransactionWorkflowIssueDto> TaxIssues { get; set; } = [];
 }

@@ -138,6 +138,7 @@ public sealed class TransactionListViewModel : ViewModelBase
             businessName: null,
             description: null,
             total: 0m,
+            statementOrder: 0,
             notes: null
         );
 
@@ -235,6 +236,19 @@ public sealed class TransactionListViewModel : ViewModelBase
                         transaction.TaxIssues.Select(issue => $"• {issue.Message}")
                     ),
         };
+    }
+
+    public void RemoveTransaction(string transactionId)
+    {
+        var transaction = Transactions.FirstOrDefault(item => item.TransactionId == transactionId);
+
+        if (transaction is null)
+            return;
+
+        Transactions.Remove(transaction);
+
+        FilteredTransactions.Refresh();
+        OnPropertyChanged(nameof(VisibleTransactionCount));
     }
 
     private static void CopyValues(
