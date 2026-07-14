@@ -1,5 +1,7 @@
-﻿using System.IO;
+﻿using System.Globalization;
+using System.IO;
 using System.Windows;
+using System.Windows.Markup;
 using System.Windows.Threading;
 using FarmBooks.Data.Database;
 using FarmBooks.Data.Repositories;
@@ -22,6 +24,16 @@ public partial class App : Application
     {
         try
         {
+            var culture = CultureInfo.GetCultureInfo("en-ZA");
+
+            CultureInfo.DefaultThreadCurrentCulture = culture;
+            CultureInfo.DefaultThreadCurrentUICulture = culture;
+
+            FrameworkElement.LanguageProperty.OverrideMetadata(
+                typeof(FrameworkElement),
+                new FrameworkPropertyMetadata(XmlLanguage.GetLanguage(culture.IetfLanguageTag))
+            );
+
             DispatcherUnhandledException += App_DispatcherUnhandledException;
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;

@@ -124,11 +124,15 @@ public sealed class TransactionListViewModel : ViewModelBase
         OnPropertyChanged(nameof(VisibleTransactionCount));
     }
 
-    public async Task<TransactionListRowViewModel> CreateNewTransactionAsync()
+    public async Task<TransactionListRowViewModel> CreateNewTransactionAsync(
+        DateTime? defaultPaymentDate
+    )
     {
+        var paymentDate = defaultPaymentDate?.Date;
+
         var transactionId = await _transactionService.CreateTransactionAsync(
             receiptDate: null,
-            paymentDate: null,
+            paymentDate: paymentDate,
             sourceType: TransactionSourceType.Receipt,
             documentNumber: null,
             businessName: null,
@@ -141,7 +145,7 @@ public sealed class TransactionListViewModel : ViewModelBase
         {
             TransactionId = transactionId,
             ReceiptDate = null,
-            PaymentDate = null,
+            PaymentDate = paymentDate,
             SourceType = "Receipt",
             BusinessName = "",
             DocumentNumber = "",

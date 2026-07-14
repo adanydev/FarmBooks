@@ -82,7 +82,8 @@ public sealed class TransactionsViewModel : ViewModelBase
 
     private async void AddNewTransaction()
     {
-        var row = await TransactionList.CreateNewTransactionAsync();
+        var defaultPaymentDate = SelectedTransaction?.PaymentDate ?? null;
+        var row = await TransactionList.CreateNewTransactionAsync(defaultPaymentDate);
         SelectedTransaction = row;
     }
 
