@@ -7,7 +7,7 @@ public interface ITransactionService
 {
     Task<string> CreateTransactionAsync(
         DateTime? receiptDate,
-        DateTime paymentDate,
+        DateTime? paymentDate,
         TransactionSourceType sourceType,
         string? documentNumber,
         string? businessName,
@@ -19,7 +19,7 @@ public interface ITransactionService
     Task UpdateTransactionAsync(
         string transactionId,
         DateTime? receiptDate,
-        DateTime paymentDate,
+        DateTime? paymentDate,
         TransactionSourceType sourceType,
         string? documentNumber,
         string? businessName,

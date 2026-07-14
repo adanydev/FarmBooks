@@ -33,7 +33,7 @@ public sealed class TransactionService : ITransactionService
 
     public async Task<string> CreateTransactionAsync(
         DateTime? receiptDate,
-        DateTime paymentDate,
+        DateTime? paymentDate,
         TransactionSourceType sourceType,
         string? documentNumber,
         string? businessName,
@@ -92,7 +92,7 @@ public sealed class TransactionService : ITransactionService
     public async Task UpdateTransactionAsync(
         string transactionId,
         DateTime? receiptDate,
-        DateTime paymentDate,
+        DateTime? paymentDate,
         TransactionSourceType sourceType,
         string? documentNumber,
         string? businessName,

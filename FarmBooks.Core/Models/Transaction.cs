@@ -5,7 +5,7 @@ public sealed class Transaction
     public string TransactionId { get; set; } = "";
 
     public DateTime? ReceiptDate { get; set; }
-    public DateTime PaymentDate { get; set; }
+    public DateTime? PaymentDate { get; set; }
 
     public TransactionSourceType SourceType { get; set; }
 

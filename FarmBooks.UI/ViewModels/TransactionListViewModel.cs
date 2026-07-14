@@ -126,11 +126,9 @@ public sealed class TransactionListViewModel : ViewModelBase
 
     public async Task<TransactionListRowViewModel> CreateNewTransactionAsync()
     {
-        var defaultDate = DateTime.Today;
-
         var transactionId = await _transactionService.CreateTransactionAsync(
-            receiptDate: defaultDate,
-            paymentDate: defaultDate,
+            receiptDate: null,
+            paymentDate: null,
             sourceType: TransactionSourceType.Receipt,
             documentNumber: null,
             businessName: null,
@@ -142,8 +140,8 @@ public sealed class TransactionListViewModel : ViewModelBase
         var row = new TransactionListRowViewModel
         {
             TransactionId = transactionId,
-            ReceiptDate = defaultDate,
-            PaymentDate = defaultDate,
+            ReceiptDate = null,
+            PaymentDate = null,
             SourceType = "Receipt",
             BusinessName = "",
             DocumentNumber = "",

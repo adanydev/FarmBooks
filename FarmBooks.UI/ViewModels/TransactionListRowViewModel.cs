@@ -6,7 +6,7 @@ public sealed class TransactionListRowViewModel : ViewModelBase
 {
     private string _transactionId = "";
     private DateTime? _receiptDate;
-    private DateTime _paymentDate;
+    private DateTime? _paymentDate;
     private string _sourceType = "";
     private string _documentNumber = "";
     private string _businessName = "";
@@ -49,7 +49,7 @@ public sealed class TransactionListRowViewModel : ViewModelBase
         set => SetProperty(ref _receiptDate, value);
     }
 
-    public DateTime PaymentDate
+    public DateTime? PaymentDate
     {
         get => _paymentDate;
         set => SetProperty(ref _paymentDate, value);

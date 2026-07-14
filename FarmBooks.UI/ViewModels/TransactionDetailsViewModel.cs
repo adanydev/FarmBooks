@@ -10,7 +10,7 @@ public sealed class TransactionDetailsViewModel : ViewModelBase, IDataErrorInfo
 {
     private string _transactionId = "";
     private DateTime? _receiptDate;
-    private DateTime _paymentDate;
+    private DateTime? _paymentDate;
     private string _sourceType = "Receipt";
     private string _documentNumber = "";
     private string _businessName = "";
@@ -99,7 +99,7 @@ Current VAT Rate: {TaxConstants.VatRate:P0}
         set => SetProperty(ref _receiptDate, value);
     }
 
-    public DateTime PaymentDate
+    public DateTime? PaymentDate
     {
         get => _paymentDate;
         set => SetProperty(ref _paymentDate, value);
@@ -231,7 +231,8 @@ Current VAT Rate: {TaxConstants.VatRate:P0}
         {
             return columnName switch
             {
-                nameof(PaymentDate) when ReceiptDate == default => "Transaction date is required.",
+                nameof(PaymentDate) when PaymentDate == default => "Payment date is required.",
+
                 nameof(BusinessName) when string.IsNullOrWhiteSpace(BusinessName) =>
                     "Business name is required.",
 

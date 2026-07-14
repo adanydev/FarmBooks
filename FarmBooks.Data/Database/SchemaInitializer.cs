@@ -66,7 +66,7 @@ public sealed class SchemaInitializer
             CREATE TABLE IF NOT EXISTS Transactions
             (
                 TransactionId TEXT PRIMARY KEY,
-                ReceiptDate TEXT NOT NULL,
+                ReceiptDate TEXT NULL,
                 PaymentDate TEXT NULL,
                 SourceType INTEGER NOT NULL,
                 DocumentNumber TEXT NULL,
