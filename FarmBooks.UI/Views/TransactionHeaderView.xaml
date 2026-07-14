@@ -1,7 +1,12 @@
 <UserControl x:Class="FarmBooks.UI.Views.TransactionHeaderView"
+             xmlns:infrastructure="clr-namespace:FarmBooks.UI.Infrastructure"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Language="en-ZA">
 
+       <UserControl.Resources>
+              <infrastructure:NullableDateConverter x:Key="NullableDateConverter"/>
+       </UserControl.Resources>
        <StackPanel>
               <TextBlock Text="Transaction Details"
                          FontSize="20"
@@ -9,15 +14,20 @@
                          Margin="0,0,0,16"/>
 
               <TextBlock Text="Payment Date"/>
-              <DatePicker SelectedDate="{Binding PaymentDate,
-                                   UpdateSourceTrigger=PropertyChanged}"
-                          Margin="0,4,0,12"/>
+              <TextBox Text="{Binding PaymentDate,
+                        Mode=TwoWay,
+                        UpdateSourceTrigger=LostFocus,
+                        Converter={StaticResource NullableDateConverter}}"
+                       ToolTip="Enter date as dd/MM/yyyy"
+                       Margin="0,4,0,12"/>
 
               <TextBlock Text="Receipt Date"/>
-              <DatePicker SelectedDate="{Binding ReceiptDate,
-                                   UpdateSourceTrigger=PropertyChanged,
-                                   ValidatesOnDataErrors=True}"
-                          Margin="0,4,0,12"/>
+              <TextBox Text="{Binding ReceiptDate,
+                        Mode=TwoWay,
+                        UpdateSourceTrigger=LostFocus,
+                        Converter={StaticResource NullableDateConverter}}"
+                       ToolTip="Enter date as dd/MM/yyyy"
+                       Margin="0,4,0,12"/>
 
               <TextBlock Text="Receipt # / Reference"/>
 
