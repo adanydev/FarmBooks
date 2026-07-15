@@ -11,7 +11,9 @@ namespace FarmBooks.UI.ViewModels;
 public sealed class TransactionListViewModel : ViewModelBase
 {
     private readonly ITransactionService _transactionService;
+
     private TransactionListFilter _selectedFilter = TransactionListFilter.All;
+
     private string _searchText = "";
 
     public TransactionListViewModel(ITransactionService transactionService)
@@ -24,6 +26,7 @@ public sealed class TransactionListViewModel : ViewModelBase
     }
 
     public ObservableCollection<TransactionListRowViewModel> Transactions { get; } = new();
+
     public ICollectionView FilteredTransactions { get; }
 
     public IReadOnlyList<TransactionListFilterOption> FilterOptions { get; } =
@@ -42,8 +45,7 @@ public sealed class TransactionListViewModel : ViewModelBase
         {
             if (SetProperty(ref _selectedFilter, value))
             {
-                FilteredTransactions.Refresh();
-                OnPropertyChanged(nameof(VisibleTransactionCount));
+                RefreshView();
             }
         }
     }
@@ -55,23 +57,110 @@ public sealed class TransactionListViewModel : ViewModelBase
         {
             if (SetProperty(ref _searchText, value))
             {
-                FilteredTransactions.Refresh();
-                OnPropertyChanged(nameof(VisibleTransactionCount));
+                RefreshView();
             }
         }
     }
 
     public int VisibleTransactionCount => FilteredTransactions.Cast<object>().Count();
 
+    public async Task LoadAsync()
+    {
+        var transactions = await _transactionService.GetTransactionListAsync();
+
+        Transactions.Clear();
+
+        foreach (var transaction in transactions)
+        {
+            Transactions.Add(MapToRow(transaction));
+        }
+
+        RefreshView();
+    }
+
+    public Task ReloadAsync()
+    {
+        return LoadAsync();
+    }
+
+    public async Task<TransactionListRowViewModel> CreateNewTransactionAsync(
+        DateTime? defaultPaymentDate,
+        string? insertAfterTransactionId
+    )
+    {
+        var transactionId = await _transactionService.CreateTransactionAsync(
+            receiptDate: null,
+            paymentDate: defaultPaymentDate?.Date,
+            sourceType: TransactionSourceType.Receipt,
+            documentNumber: null,
+            businessName: null,
+            description: null,
+            total: 0m,
+            notes: null,
+            insertAfterTransactionId: insertAfterTransactionId
+        );
+
+        // Existing rows may have shifted.
+        await LoadAsync();
+
+        return Transactions.First(transaction => transaction.TransactionId == transactionId);
+    }
+
+    public async Task<TransactionListRowViewModel?> RefreshTransactionAsync(string transactionId)
+    {
+        if (string.IsNullOrWhiteSpace(transactionId))
+        {
+            return null;
+        }
+
+        var transactions = await _transactionService.GetTransactionListAsync();
+
+        var refreshedTransaction = transactions.FirstOrDefault(transaction =>
+            transaction.TransactionId == transactionId
+        );
+
+        if (refreshedTransaction is null)
+            return null;
+
+        var refreshedRow = MapToRow(refreshedTransaction);
+
+        var existingRow = Transactions.FirstOrDefault(transaction =>
+            transaction.TransactionId == transactionId
+        );
+
+        if (existingRow is null)
+        {
+            Transactions.Insert(0, refreshedRow);
+            RefreshView();
+            return refreshedRow;
+        }
+
+        CopyValues(refreshedRow, existingRow);
+
+        RefreshView();
+
+        return existingRow;
+    }
+
+    public void RemoveTransaction(string transactionId)
+    {
+        var transaction = Transactions.FirstOrDefault(item => item.TransactionId == transactionId);
+
+        if (transaction is null)
+            return;
+
+        Transactions.Remove(transaction);
+        RefreshView();
+    }
+
     private bool FilterTransaction(object item)
     {
         if (item is not TransactionListRowViewModel transaction)
+        {
             return false;
+        }
 
-        if (!MatchesWorkflowFilter(transaction))
-            return false;
-
-        return MatchesSearch(transaction);
+        return MatchesWorkflowFilter(transaction) && MatchesSearch(transaction);
     }
 
     private bool MatchesWorkflowFilter(TransactionListRowViewModel transaction)
@@ -95,7 +184,9 @@ public sealed class TransactionListViewModel : ViewModelBase
     private bool MatchesSearch(TransactionListRowViewModel transaction)
     {
         if (string.IsNullOrWhiteSpace(SearchText))
+        {
             return true;
+        }
 
         var search = SearchText.Trim();
 
@@ -109,76 +200,11 @@ public sealed class TransactionListViewModel : ViewModelBase
         return value?.Contains(search, StringComparison.OrdinalIgnoreCase) == true;
     }
 
-    public async Task ReloadAsync()
+    private void RefreshView()
     {
-        await LoadAsync();
-    }
-
-    public async Task LoadAsync()
-    {
-        var transactions = await _transactionService.GetTransactionListAsync();
-
-        Transactions.Clear();
-
-        foreach (var transaction in transactions)
-        {
-            Transactions.Add(MapToRow(transaction));
-        }
-
         FilteredTransactions.Refresh();
+
         OnPropertyChanged(nameof(VisibleTransactionCount));
-    }
-
-    public async Task<TransactionListRowViewModel> CreateNewTransactionAsync(
-        DateTime? defaultPaymentDate
-    )
-    {
-        var transactionId = await _transactionService.CreateTransactionAsync(
-            receiptDate: null,
-            paymentDate: defaultPaymentDate,
-            sourceType: TransactionSourceType.Receipt,
-            documentNumber: null,
-            businessName: null,
-            description: null,
-            total: 0m,
-            notes: null
-        );
-
-        return await RefreshTransactionAsync(transactionId)
-            ?? throw new InvalidOperationException("The new transaction could not be loaded.");
-    }
-
-    public async Task<TransactionListRowViewModel?> RefreshTransactionAsync(string transactionId)
-    {
-        if (string.IsNullOrWhiteSpace(transactionId))
-            return null;
-
-        var transactions = await _transactionService.GetTransactionListAsync();
-
-        var refreshedTransaction = transactions.FirstOrDefault(transaction =>
-            transaction.TransactionId == transactionId
-        );
-
-        if (refreshedTransaction is null)
-            return null;
-
-        var refreshedRow = MapToRow(refreshedTransaction);
-
-        var existingRow = Transactions.FirstOrDefault(transaction =>
-            transaction.TransactionId == transactionId
-        );
-
-        if (existingRow is null)
-        {
-            Transactions.Insert(0, refreshedRow);
-            FilteredTransactions.Refresh();
-            OnPropertyChanged(nameof(VisibleTransactionCount));
-            return refreshedRow;
-        }
-
-        CopyValues(refreshedRow, existingRow);
-
-        return existingRow;
     }
 
     private static TransactionListRowViewModel MapToRow(TransactionListItemDto transaction)
@@ -186,52 +212,51 @@ public sealed class TransactionListViewModel : ViewModelBase
         return new TransactionListRowViewModel
         {
             TransactionId = transaction.TransactionId,
+
             ReceiptDate = transaction.ReceiptDate,
+
             PaymentDate = transaction.PaymentDate,
+
             SourceType = transaction.SourceType,
+
             DocumentNumber = transaction.DocumentNumber ?? "",
+
             BusinessName = transaction.BusinessName ?? "",
+
             Description = transaction.Description ?? "",
+
             Total = transaction.Total,
             Status = transaction.Status,
             Matched = transaction.IsMatched,
+
             LineItemCount = transaction.LineItemCount,
+
             DocumentCount = transaction.DocumentCount,
+
             StatementOrder = transaction.StatementOrder,
 
             IsVatReady = transaction.IsVatReady,
+
             IsTaxReady = transaction.IsTaxReady,
+
             VatIssueCount = transaction.VatIssueCount,
+
             TaxIssueCount = transaction.TaxIssueCount,
 
-            VatIssuesToolTip =
-                transaction.VatIssues.Count == 0
-                    ? "VAT is ready."
-                    : string.Join(
-                        Environment.NewLine,
-                        transaction.VatIssues.Select(issue => $"• {issue.Message}")
-                    ),
-            TaxIssuesToolTip =
-                transaction.TaxIssues.Count == 0
-                    ? "Tax work is ready."
-                    : string.Join(
-                        Environment.NewLine,
-                        transaction.TaxIssues.Select(issue => $"• {issue.Message}")
-                    ),
+            VatIssuesToolTip = CreateIssuesToolTip(transaction.VatIssues, "VAT is ready."),
+
+            TaxIssuesToolTip = CreateIssuesToolTip(transaction.TaxIssues, "Tax work is ready."),
         };
     }
 
-    public void RemoveTransaction(string transactionId)
+    private static string CreateIssuesToolTip(
+        IReadOnlyList<TransactionWorkflowIssueDto> issues,
+        string readyMessage
+    )
     {
-        var transaction = Transactions.FirstOrDefault(item => item.TransactionId == transactionId);
-
-        if (transaction is null)
-            return;
-
-        Transactions.Remove(transaction);
-
-        FilteredTransactions.Refresh();
-        OnPropertyChanged(nameof(VisibleTransactionCount));
+        return issues.Count == 0
+            ? readyMessage
+            : string.Join(Environment.NewLine, issues.Select(issue => $"• {issue.Message}"));
     }
 
     private static void CopyValues(
@@ -240,24 +265,39 @@ public sealed class TransactionListViewModel : ViewModelBase
     )
     {
         destination.ReceiptDate = source.ReceiptDate;
+
         destination.PaymentDate = source.PaymentDate;
+
         destination.SourceType = source.SourceType;
+
         destination.DocumentNumber = source.DocumentNumber;
+
         destination.BusinessName = source.BusinessName;
+
         destination.Description = source.Description;
+
         destination.Total = source.Total;
+
         destination.Status = source.Status;
+
         destination.Matched = source.Matched;
+
         destination.LineItemCount = source.LineItemCount;
+
         destination.DocumentCount = source.DocumentCount;
 
+        destination.StatementOrder = source.StatementOrder;
+
         destination.IsVatReady = source.IsVatReady;
+
         destination.IsTaxReady = source.IsTaxReady;
+
         destination.VatIssueCount = source.VatIssueCount;
+
         destination.TaxIssueCount = source.TaxIssueCount;
 
         destination.VatIssuesToolTip = source.VatIssuesToolTip;
+
         destination.TaxIssuesToolTip = source.TaxIssuesToolTip;
-        destination.StatementOrder = source.StatementOrder;
     }
 }

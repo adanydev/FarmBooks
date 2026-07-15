@@ -1,7 +1,6 @@
 using FarmBooks.Core.DTOs.Transactions;
 using FarmBooks.Core.Models;
 using FarmBooks.Data.Repositories;
-using FarmBooks.Services;
 
 namespace FarmBooks.Services;
 
@@ -39,11 +38,32 @@ public sealed class TransactionService : ITransactionService
         string? businessName,
         string? description,
         decimal total,
-        string? notes
+        string? notes,
+        string? insertAfterTransactionId = null
     )
     {
+        int? insertAtStatementOrder = null;
+
+        if (!string.IsNullOrWhiteSpace(insertAfterTransactionId))
+        {
+            var selectedTransaction = await _transactions.GetAsync(insertAfterTransactionId);
+
+            if (selectedTransaction is null)
+            {
+                throw new InvalidOperationException("The selected transaction could not be found.");
+            }
+
+            if (!AreSamePaymentDate(selectedTransaction.PaymentDate, paymentDate))
+            {
+                throw new InvalidOperationException(
+                    "The new transaction can only be inserted after a transaction with the same payment date."
+                );
+            }
+
+            insertAtStatementOrder = selectedTransaction.StatementOrder + 1;
+        }
+
         var now = DateTime.UtcNow;
-        var statementOrder = await _transactions.GetNextStatementOrderAsync(paymentDate);
 
         var transaction = new Transaction
         {
@@ -51,17 +71,17 @@ public sealed class TransactionService : ITransactionService
             ReceiptDate = receiptDate,
             PaymentDate = paymentDate,
             SourceType = sourceType,
-            DocumentNumber = documentNumber,
-            BusinessName = businessName,
-            Description = description,
+            DocumentNumber = NullIfWhiteSpace(documentNumber),
+            BusinessName = NullIfWhiteSpace(businessName),
+            Description = NullIfWhiteSpace(description),
             Total = total,
-            StatementOrder = statementOrder,
-            Notes = notes,
+            StatementOrder = 0,
+            Notes = NullIfWhiteSpace(notes),
             CreatedAt = now,
             UpdatedAt = now,
         };
 
-        await _transactions.CreateAsync(transaction);
+        await _transactions.CreateAsync(transaction, insertAtStatementOrder);
 
         await _auditService.WriteAsync(
             "Transaction",
@@ -79,7 +99,9 @@ public sealed class TransactionService : ITransactionService
         var transaction = await _transactions.GetAsync(transactionId);
 
         if (transaction is null)
+        {
             throw new InvalidOperationException("Transaction not found.");
+        }
 
         var lineItems = await _lineItems.ListForTransactionAsync(transactionId);
 
@@ -111,69 +133,50 @@ public sealed class TransactionService : ITransactionService
         var transaction = await _transactions.GetAsync(transactionId);
 
         if (transaction is null)
+        {
             throw new InvalidOperationException("Transaction not found.");
+        }
 
         ValidateVatSigns(total, vatC, vatS);
 
-        var oldTransaction = new Transaction
-        {
-            TransactionId = transaction.TransactionId,
-            ReceiptDate = transaction.ReceiptDate,
-            PaymentDate = transaction.PaymentDate,
-            SourceType = transaction.SourceType,
-            DocumentNumber = transaction.DocumentNumber,
-            BusinessName = transaction.BusinessName,
-            Description = transaction.Description,
-            Total = transaction.Total,
-            VatApplicability = transaction.VatApplicability,
-            VatEntryMethod = transaction.VatEntryMethod,
-            VATC = transaction.VATC,
-            VATS = transaction.VATS,
-            IsVatClassificationConfirmed = transaction.IsVatClassificationConfirmed,
-            StatementOrder = transaction.StatementOrder,
-            Notes = transaction.Notes,
-            CreatedAt = transaction.CreatedAt,
-            UpdatedAt = transaction.UpdatedAt,
-            DeletedAt = transaction.DeletedAt,
-        };
+        var oldTransaction = CopyTransaction(transaction);
+
+        var originalPaymentDate = transaction.PaymentDate;
+
+        var originalStatementOrder = transaction.StatementOrder;
 
         transaction.ReceiptDate = receiptDate;
         transaction.PaymentDate = paymentDate;
         transaction.SourceType = sourceType;
-        transaction.DocumentNumber = string.IsNullOrWhiteSpace(documentNumber)
-            ? null
-            : documentNumber.Trim();
-
-        transaction.BusinessName = string.IsNullOrWhiteSpace(businessName)
-            ? null
-            : businessName.Trim();
-
-        transaction.Description = string.IsNullOrWhiteSpace(description)
-            ? null
-            : description.Trim();
-
+        transaction.DocumentNumber = NullIfWhiteSpace(documentNumber);
+        transaction.BusinessName = NullIfWhiteSpace(businessName);
+        transaction.Description = NullIfWhiteSpace(description);
         transaction.Total = total;
         transaction.VatApplicability = vatApplicability;
 
         if (vatApplicability == VatApplicability.Yes)
         {
             transaction.VatEntryMethod = vatEntryMethod;
+
             transaction.VATC = NormalizeVatAmount(vatC);
+
             transaction.VATS = NormalizeVatAmount(vatS);
+
             transaction.IsVatClassificationConfirmed = isVatClassificationConfirmed;
         }
         else
         {
-            // A deliberate No or Not Sure clears stale VAT details.
             transaction.VatEntryMethod = VatEntryMethod.None;
+
             transaction.VATC = null;
             transaction.VATS = null;
+
             transaction.IsVatClassificationConfirmed = false;
         }
 
-        transaction.Notes = string.IsNullOrWhiteSpace(notes) ? null : notes.Trim();
+        transaction.Notes = NullIfWhiteSpace(notes);
 
-        await _transactions.UpdateAsync(transaction);
+        await _transactions.UpdateAsync(transaction, originalPaymentDate, originalStatementOrder);
 
         await _auditService.WriteAsync(
             "Transaction",
@@ -188,7 +191,12 @@ public sealed class TransactionService : ITransactionService
     {
         var transaction = await _transactions.GetAsync(transactionId);
 
-        await _transactions.SoftDeleteAsync(transactionId);
+        if (transaction is null)
+        {
+            throw new InvalidOperationException("Transaction not found.");
+        }
+
+        await _transactions.DeleteAsync(transaction);
 
         await _auditService.WriteAsync("Transaction", transactionId, "Deleted", transaction, null);
     }
@@ -209,16 +217,19 @@ public sealed class TransactionService : ITransactionService
     public async Task<IReadOnlyList<TransactionListItemDto>> GetTransactionListAsync()
     {
         var transactions = await _transactions.ListAsync();
-        var codes = await _codes.ListActiveAsync();
 
         var result = new List<TransactionListItemDto>();
 
         foreach (var transaction in transactions)
         {
             var lineItems = await _lineItems.ListForTransactionAsync(transaction.TransactionId);
+
             var workflow = TransactionWorkflowStatusCalculator.Calculate(transaction, lineItems);
+
             var status = TransactionStatusCalculator.Calculate(transaction, lineItems);
+
             var isMatched = await _matches.IsTransactionMatchedAsync(transaction.TransactionId);
+
             var documentCount = await _documents.CountForTransactionAsync(
                 transaction.TransactionId
             );
@@ -260,10 +271,15 @@ public sealed class TransactionService : ITransactionService
             return null;
 
         var lineItems = await _lineItems.ListForTransactionAsync(transactionId);
+
         var workflow = TransactionWorkflowStatusCalculator.Calculate(transaction, lineItems);
+
         var documents = await _documents.ListForTransactionAsync(transactionId);
+
         var codes = await _codes.ListActiveAsync();
+
         var status = TransactionStatusCalculator.Calculate(transaction, lineItems);
+
         var isMatched = await _matches.IsTransactionMatchedAsync(transactionId);
 
         return new TransactionDetailsDto
@@ -288,30 +304,30 @@ public sealed class TransactionService : ITransactionService
             StatementOrder = transaction.StatementOrder,
 
             LineItems = lineItems
-                .Select(x =>
+                .Select(item =>
                 {
-                    var code = codes.FirstOrDefault(c => c.CodeId == x.CodeId);
+                    var code = codes.FirstOrDefault(candidate => candidate.CodeId == item.CodeId);
 
                     return new TransactionLineItemDto
                     {
-                        TransactionLineItemId = x.TransactionLineItemId,
-                        CodeId = x.CodeId,
+                        TransactionLineItemId = item.TransactionLineItemId,
+                        CodeId = item.CodeId,
                         Code = code?.Code,
                         CodeName = code?.Name,
-                        Description = x.Description,
-                        Total = x.Total,
+                        Description = item.Description,
+                        Total = item.Total,
                     };
                 })
                 .ToList(),
 
             Documents = documents
-                .Select(x => new TransactionDocumentDto
+                .Select(document => new TransactionDocumentDto
                 {
-                    TransactionDocumentId = x.TransactionDocumentId,
-                    FileName = x.FileName,
-                    MimeType = x.MimeType,
-                    DocumentType = x.DocumentType,
-                    UploadedAt = x.UploadedAt,
+                    TransactionDocumentId = document.TransactionDocumentId,
+                    FileName = document.FileName,
+                    MimeType = document.MimeType,
+                    DocumentType = document.DocumentType,
+                    UploadedAt = document.UploadedAt,
                 })
                 .ToList(),
         };
@@ -326,14 +342,16 @@ public sealed class TransactionService : ITransactionService
             throw new InvalidOperationException("Transaction not found.");
         }
 
-        if (current.PaymentDate is null)
+        await _transactions.NormalizeStatementOrdersAsync(current.PaymentDate);
+
+        current = await _transactions.GetAsync(transactionId);
+
+        if (current is null)
         {
-            throw new InvalidOperationException(
-                "A transaction needs a payment date before it can be reordered."
-            );
+            throw new InvalidOperationException("Transaction could not be reloaded.");
         }
 
-        var transactions = (await _transactions.ListForPaymentDateAsync(current.PaymentDate.Value))
+        var transactions = (await _transactions.ListForPaymentDateAsync(current.PaymentDate))
             .OrderBy(transaction => transaction.StatementOrder)
             .ThenBy(transaction => transaction.CreatedAt)
             .ToList();
@@ -355,6 +373,10 @@ public sealed class TransactionService : ITransactionService
 
         var target = transactions[targetIndex];
 
+        var originalCurrentOrder = current.StatementOrder;
+
+        var originalTargetOrder = target.StatementOrder;
+
         await _transactions.UpdateStatementOrdersAsync(
             current.TransactionId,
             target.StatementOrder,
@@ -368,17 +390,59 @@ public sealed class TransactionService : ITransactionService
             direction == TransactionMoveDirection.Up ? "Moved Up" : "Moved Down",
             new
             {
-                current.StatementOrder,
+                StatementOrder = originalCurrentOrder,
+
                 TargetTransactionId = target.TransactionId,
-                TargetStatementOrder = target.StatementOrder,
+
+                TargetStatementOrder = originalTargetOrder,
             },
             new
             {
-                StatementOrder = target.StatementOrder,
+                StatementOrder = originalTargetOrder,
+
                 TargetTransactionId = target.TransactionId,
-                TargetStatementOrder = current.StatementOrder,
+
+                TargetStatementOrder = originalCurrentOrder,
             }
         );
+    }
+
+    private static Transaction CopyTransaction(Transaction transaction)
+    {
+        return new Transaction
+        {
+            TransactionId = transaction.TransactionId,
+            ReceiptDate = transaction.ReceiptDate,
+            PaymentDate = transaction.PaymentDate,
+            SourceType = transaction.SourceType,
+            DocumentNumber = transaction.DocumentNumber,
+            BusinessName = transaction.BusinessName,
+            Description = transaction.Description,
+            Total = transaction.Total,
+            VatApplicability = transaction.VatApplicability,
+            VatEntryMethod = transaction.VatEntryMethod,
+            VATC = transaction.VATC,
+            VATS = transaction.VATS,
+            IsVatClassificationConfirmed = transaction.IsVatClassificationConfirmed,
+            StatementOrder = transaction.StatementOrder,
+            Notes = transaction.Notes,
+            CreatedAt = transaction.CreatedAt,
+            UpdatedAt = transaction.UpdatedAt,
+            DeletedAt = transaction.DeletedAt,
+        };
+    }
+
+    private static bool AreSamePaymentDate(DateTime? first, DateTime? second)
+    {
+        if (first is null || second is null)
+            return first is null && second is null;
+
+        return first.Value.Date == second.Value.Date;
+    }
+
+    private static string? NullIfWhiteSpace(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
     }
 
     private static void ValidateVatSigns(decimal transactionTotal, decimal? vatC, decimal? vatS)
@@ -396,15 +460,12 @@ public sealed class TransactionService : ITransactionService
         }
     }
 
-    private static bool HasVatAmount(decimal? value)
-    {
-        return value is not null && value.Value != 0m;
-    }
-
     private static decimal? NormalizeVatAmount(decimal? value)
     {
         if (value is null || value.Value == 0m)
+        {
             return null;
+        }
 
         return decimal.Round(value.Value, 2);
     }

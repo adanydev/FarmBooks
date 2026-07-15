@@ -9,8 +9,11 @@ namespace FarmBooks.UI.ViewModels;
 public sealed class TransactionsViewModel : ViewModelBase
 {
     private readonly ITransactionService _transactionService;
+
     private readonly IConfirmationService _confirmationService;
+
     private TransactionListRowViewModel? _selectedTransaction;
+
     private bool _isInitialized;
     private bool _isLoading;
     private string _loadMessage = "";
@@ -29,7 +32,9 @@ public sealed class TransactionsViewModel : ViewModelBase
         _confirmationService = confirmationService;
 
         NewTransactionCommand = new RelayCommand(AddNewTransaction);
+
         MoveTransactionUpCommand = new AsyncRelayCommand(MoveSelectedTransactionUpAsync);
+
         MoveTransactionDownCommand = new AsyncRelayCommand(MoveSelectedTransactionDownAsync);
 
         DeleteTransactionCommand = new AsyncRelayCommand(DeleteSelectedTransactionAsync);
@@ -50,6 +55,7 @@ public sealed class TransactionsViewModel : ViewModelBase
     }
 
     public TransactionListViewModel TransactionList { get; }
+
     public TransactionEditorViewModel TransactionEditor { get; }
 
     public TransactionListRowViewModel? SelectedTransaction
@@ -69,6 +75,7 @@ public sealed class TransactionsViewModel : ViewModelBase
     public ICommand DeleteTransactionCommand { get; }
 
     public ICommand MoveTransactionUpCommand { get; }
+
     public ICommand MoveTransactionDownCommand { get; }
 
     public async Task InitializeAsync()
@@ -101,9 +108,24 @@ public sealed class TransactionsViewModel : ViewModelBase
 
     private async void AddNewTransaction()
     {
-        var defaultPaymentDate = SelectedTransaction?.PaymentDate ?? null;
-        var row = await TransactionList.CreateNewTransactionAsync(defaultPaymentDate);
-        SelectedTransaction = row;
+        var selected = SelectedTransaction;
+
+        try
+        {
+            LoadMessage = "Creating transaction...";
+
+            var row = await TransactionList.CreateNewTransactionAsync(
+                defaultPaymentDate: selected?.PaymentDate,
+                insertAfterTransactionId: selected?.TransactionId
+            );
+
+            SelectedTransaction = row;
+            LoadMessage = "";
+        }
+        catch (Exception ex)
+        {
+            LoadMessage = $"Could not create transaction: {ex.Message}";
+        }
     }
 
     private async void TransactionEditor_TransactionSaved(object? sender, string transactionId)
@@ -117,15 +139,11 @@ public sealed class TransactionsViewModel : ViewModelBase
             .FilteredTransactions.Cast<TransactionListRowViewModel>()
             .Any(row => row.TransactionId == transactionId);
 
-        if (isStillVisible)
-        {
-            SelectedTransaction = refreshedRow;
-            return;
-        }
-
-        SelectedTransaction = TransactionList
-            .FilteredTransactions.Cast<TransactionListRowViewModel>()
-            .FirstOrDefault();
+        SelectedTransaction = isStillVisible
+            ? refreshedRow
+            : TransactionList
+                .FilteredTransactions.Cast<TransactionListRowViewModel>()
+                .FirstOrDefault();
     }
 
     private async Task DeleteSelectedTransactionAsync()
@@ -134,6 +152,14 @@ public sealed class TransactionsViewModel : ViewModelBase
 
         if (transaction is null)
             return;
+
+        var visibleBeforeDelete = TransactionList
+            .FilteredTransactions.Cast<TransactionListRowViewModel>()
+            .ToList();
+
+        var deletedVisibleIndex = visibleBeforeDelete.FindIndex(row =>
+            row.TransactionId == transaction.TransactionId
+        );
 
         var businessName = string.IsNullOrWhiteSpace(transaction.BusinessName)
             ? "(No business name)"
@@ -163,11 +189,25 @@ public sealed class TransactionsViewModel : ViewModelBase
 
             await _transactionService.DeleteTransactionAsync(transaction.TransactionId);
 
-            TransactionList.RemoveTransaction(transaction.TransactionId);
+            await TransactionList.ReloadAsync();
 
-            SelectedTransaction = TransactionList
+            var visibleAfterDelete = TransactionList
                 .FilteredTransactions.Cast<TransactionListRowViewModel>()
-                .FirstOrDefault();
+                .ToList();
+
+            if (visibleAfterDelete.Count == 0)
+            {
+                SelectedTransaction = null;
+            }
+            else
+            {
+                var nextIndex =
+                    deletedVisibleIndex < 0
+                        ? 0
+                        : Math.Min(deletedVisibleIndex, visibleAfterDelete.Count - 1);
+
+                SelectedTransaction = visibleAfterDelete[nextIndex];
+            }
 
             LoadMessage = "";
         }
@@ -177,14 +217,14 @@ public sealed class TransactionsViewModel : ViewModelBase
         }
     }
 
-    private async Task MoveSelectedTransactionUpAsync()
+    private Task MoveSelectedTransactionUpAsync()
     {
-        await MoveSelectedTransactionAsync(TransactionMoveDirection.Up);
+        return MoveSelectedTransactionAsync(TransactionMoveDirection.Up);
     }
 
-    private async Task MoveSelectedTransactionDownAsync()
+    private Task MoveSelectedTransactionDownAsync()
     {
-        await MoveSelectedTransactionAsync(TransactionMoveDirection.Down);
+        return MoveSelectedTransactionAsync(TransactionMoveDirection.Down);
     }
 
     private async Task MoveSelectedTransactionAsync(TransactionMoveDirection direction)

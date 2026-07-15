@@ -13,7 +13,8 @@ public interface ITransactionService
         string? businessName,
         string? description,
         decimal total,
-        string? notes
+        string? notes,
+        string? insertAfterTransactionId = null
     );
 
     Task UpdateTransactionAsync(
