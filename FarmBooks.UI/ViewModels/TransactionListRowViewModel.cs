@@ -1,3 +1,4 @@
+using FarmBooks.Core.DTOs.Transactions;
 using FarmBooks.UI.Infrastructure;
 
 namespace FarmBooks.UI.ViewModels;
@@ -5,17 +6,24 @@ namespace FarmBooks.UI.ViewModels;
 public sealed class TransactionListRowViewModel : ViewModelBase
 {
     private string _transactionId = "";
+
     private DateTime? _receiptDate;
     private DateTime? _paymentDate;
+
     private string _sourceType = "";
     private string _documentNumber = "";
     private string _businessName = "";
     private string _description = "";
+
     private decimal _total;
+
     private string _status = "";
+
     private bool _matched;
+
     private int _lineItemCount;
     private int _documentCount;
+
     private bool _isVatReady;
     private bool _isTaxReady;
 
@@ -23,21 +31,19 @@ public sealed class TransactionListRowViewModel : ViewModelBase
 
     private int _vatIssueCount;
     private int _taxIssueCount;
-    private string _vatIssuesToolTip = "";
 
+    private string _vatIssuesToolTip = "";
     private string _taxIssuesToolTip = "";
 
-    public string TaxIssuesToolTip
-    {
-        get => _taxIssuesToolTip;
-        set => SetProperty(ref _taxIssuesToolTip, value);
-    }
+    private string _codesSummary = "Uncoded";
+    private string _codesToolTip = "No accounting coding lines.";
 
-    public string VatIssuesToolTip
-    {
-        get => _vatIssuesToolTip;
-        set => SetProperty(ref _vatIssuesToolTip, value);
-    }
+    private decimal _allocatedTotal;
+    private decimal _remainingTotal;
+
+    private IReadOnlyList<TransactionLineItemDto> _lineItems = [];
+
+    private bool _isExpanded;
 
     public string TransactionId
     {
@@ -102,7 +108,13 @@ public sealed class TransactionListRowViewModel : ViewModelBase
     public int LineItemCount
     {
         get => _lineItemCount;
-        set => SetProperty(ref _lineItemCount, value);
+        set
+        {
+            if (SetProperty(ref _lineItemCount, value))
+            {
+                OnPropertyChanged(nameof(HasLineItems));
+            }
+        }
     }
 
     public int DocumentCount
@@ -164,6 +176,76 @@ public sealed class TransactionListRowViewModel : ViewModelBase
         get => _statementOrder;
         set => SetProperty(ref _statementOrder, value);
     }
+
+    public string VatIssuesToolTip
+    {
+        get => _vatIssuesToolTip;
+        set => SetProperty(ref _vatIssuesToolTip, value);
+    }
+
+    public string TaxIssuesToolTip
+    {
+        get => _taxIssuesToolTip;
+        set => SetProperty(ref _taxIssuesToolTip, value);
+    }
+
+    public string CodesSummary
+    {
+        get => _codesSummary;
+        set => SetProperty(ref _codesSummary, value);
+    }
+
+    public string CodesToolTip
+    {
+        get => _codesToolTip;
+        set => SetProperty(ref _codesToolTip, value);
+    }
+
+    public decimal AllocatedTotal
+    {
+        get => _allocatedTotal;
+        set
+        {
+            if (SetProperty(ref _allocatedTotal, value))
+            {
+                OnPropertyChanged(nameof(IsAllocationBalanced));
+            }
+        }
+    }
+
+    public decimal RemainingTotal
+    {
+        get => _remainingTotal;
+        set
+        {
+            if (SetProperty(ref _remainingTotal, value))
+            {
+                OnPropertyChanged(nameof(IsAllocationBalanced));
+            }
+        }
+    }
+
+    public IReadOnlyList<TransactionLineItemDto> LineItems
+    {
+        get => _lineItems;
+        set
+        {
+            if (SetProperty(ref _lineItems, value))
+            {
+                OnPropertyChanged(nameof(HasLineItems));
+            }
+        }
+    }
+
+    public bool IsExpanded
+    {
+        get => _isExpanded;
+        set => SetProperty(ref _isExpanded, value);
+    }
+
+    public bool HasLineItems => LineItems.Count > 0;
+
+    public bool IsAllocationBalanced => Math.Abs(RemainingTotal) < 0.01m;
 
     public string VatStatusText => IsVatReady ? "✓" : $"{VatIssueCount}";
 

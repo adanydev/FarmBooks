@@ -25,7 +25,7 @@ public sealed class TransactionListViewModel : ViewModelBase
         FilteredTransactions.Filter = FilterTransaction;
     }
 
-    public ObservableCollection<TransactionListRowViewModel> Transactions { get; } = new();
+    public ObservableCollection<TransactionListRowViewModel> Transactions { get; } = [];
 
     public ICollectionView FilteredTransactions { get; }
 
@@ -66,13 +66,22 @@ public sealed class TransactionListViewModel : ViewModelBase
 
     public async Task LoadAsync()
     {
+        var expandedIds = Transactions
+            .Where(transaction => transaction.IsExpanded)
+            .Select(transaction => transaction.TransactionId)
+            .ToHashSet();
+
         var transactions = await _transactionService.GetTransactionListAsync();
 
         Transactions.Clear();
 
         foreach (var transaction in transactions)
         {
-            Transactions.Add(MapToRow(transaction));
+            var row = MapToRow(transaction);
+
+            row.IsExpanded = expandedIds.Contains(row.TransactionId);
+
+            Transactions.Add(row);
         }
 
         RefreshView();
@@ -100,7 +109,6 @@ public sealed class TransactionListViewModel : ViewModelBase
             insertAfterTransactionId: insertAfterTransactionId
         );
 
-        // Existing rows may have shifted.
         await LoadAsync();
 
         return Transactions.First(transaction => transaction.TransactionId == transactionId);
@@ -131,9 +139,13 @@ public sealed class TransactionListViewModel : ViewModelBase
         if (existingRow is null)
         {
             Transactions.Insert(0, refreshedRow);
+
             RefreshView();
+
             return refreshedRow;
         }
+
+        refreshedRow.IsExpanded = existingRow.IsExpanded;
 
         CopyValues(refreshedRow, existingRow);
 
@@ -150,6 +162,7 @@ public sealed class TransactionListViewModel : ViewModelBase
             return;
 
         Transactions.Remove(transaction);
+
         RefreshView();
     }
 
@@ -192,7 +205,8 @@ public sealed class TransactionListViewModel : ViewModelBase
 
         return Contains(transaction.BusinessName, search)
             || Contains(transaction.DocumentNumber, search)
-            || Contains(transaction.Description, search);
+            || Contains(transaction.Description, search)
+            || Contains(transaction.CodesSummary, search);
     }
 
     private static bool Contains(string? value, string search)
@@ -226,7 +240,9 @@ public sealed class TransactionListViewModel : ViewModelBase
             Description = transaction.Description ?? "",
 
             Total = transaction.Total,
+
             Status = transaction.Status,
+
             Matched = transaction.IsMatched,
 
             LineItemCount = transaction.LineItemCount,
@@ -246,6 +262,16 @@ public sealed class TransactionListViewModel : ViewModelBase
             VatIssuesToolTip = CreateIssuesToolTip(transaction.VatIssues, "VAT is ready."),
 
             TaxIssuesToolTip = CreateIssuesToolTip(transaction.TaxIssues, "Tax work is ready."),
+
+            CodesSummary = transaction.CodesSummary,
+
+            CodesToolTip = transaction.CodesToolTip,
+
+            AllocatedTotal = transaction.AllocatedTotal,
+
+            RemainingTotal = transaction.RemainingTotal,
+
+            LineItems = transaction.LineItems,
         };
     }
 
@@ -299,5 +325,17 @@ public sealed class TransactionListViewModel : ViewModelBase
         destination.VatIssuesToolTip = source.VatIssuesToolTip;
 
         destination.TaxIssuesToolTip = source.TaxIssuesToolTip;
+
+        destination.CodesSummary = source.CodesSummary;
+
+        destination.CodesToolTip = source.CodesToolTip;
+
+        destination.AllocatedTotal = source.AllocatedTotal;
+
+        destination.RemainingTotal = source.RemainingTotal;
+
+        destination.LineItems = source.LineItems;
+
+        destination.IsExpanded = source.IsExpanded;
     }
 }

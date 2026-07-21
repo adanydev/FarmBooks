@@ -7,10 +7,15 @@ namespace FarmBooks.Services;
 public sealed class TransactionService : ITransactionService
 {
     private readonly TransactionRepository _transactions;
+
     private readonly TransactionLineItemRepository _lineItems;
+
     private readonly TransactionMatchRepository _matches;
+
     private readonly TransactionDocumentRepository _documents;
+
     private readonly AccountingCodeRepository _codes;
+
     private readonly AuditService _auditService;
 
     public TransactionService(
@@ -68,15 +73,23 @@ public sealed class TransactionService : ITransactionService
         var transaction = new Transaction
         {
             TransactionId = Guid.NewGuid().ToString(),
+
             ReceiptDate = receiptDate,
             PaymentDate = paymentDate,
             SourceType = sourceType,
+
             DocumentNumber = NullIfWhiteSpace(documentNumber),
+
             BusinessName = NullIfWhiteSpace(businessName),
+
             Description = NullIfWhiteSpace(description),
+
             Total = total,
+
             StatementOrder = 0,
+
             Notes = NullIfWhiteSpace(notes),
+
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -148,10 +161,15 @@ public sealed class TransactionService : ITransactionService
         transaction.ReceiptDate = receiptDate;
         transaction.PaymentDate = paymentDate;
         transaction.SourceType = sourceType;
+
         transaction.DocumentNumber = NullIfWhiteSpace(documentNumber);
+
         transaction.BusinessName = NullIfWhiteSpace(businessName);
+
         transaction.Description = NullIfWhiteSpace(description);
+
         transaction.Total = total;
+
         transaction.VatApplicability = vatApplicability;
 
         if (vatApplicability == VatApplicability.Yes)
@@ -218,11 +236,19 @@ public sealed class TransactionService : ITransactionService
     {
         var transactions = await _transactions.ListAsync();
 
+        var codes = await _codes.ListActiveAsync();
+
         var result = new List<TransactionListItemDto>();
 
         foreach (var transaction in transactions)
         {
             var lineItems = await _lineItems.ListForTransactionAsync(transaction.TransactionId);
+
+            var lineItemDtos = MapLineItems(lineItems, codes);
+
+            var allocatedTotal = lineItemDtos.Sum(item => item.Total);
+
+            var remainingTotal = transaction.Total - allocatedTotal;
 
             var workflow = TransactionWorkflowStatusCalculator.Calculate(transaction, lineItems);
 
@@ -238,24 +264,52 @@ public sealed class TransactionService : ITransactionService
                 new TransactionListItemDto
                 {
                     TransactionId = transaction.TransactionId,
+
                     ReceiptDate = transaction.ReceiptDate,
+
                     PaymentDate = transaction.PaymentDate,
+
                     SourceType = transaction.SourceType.ToString(),
+
                     DocumentNumber = transaction.DocumentNumber,
+
                     BusinessName = transaction.BusinessName,
+
                     Description = transaction.Description,
+
                     Total = transaction.Total,
+
                     Status = status.ToString(),
+
                     IsVatReady = workflow.IsVatReady,
+
                     IsTaxReady = workflow.IsTaxReady,
+
                     VatIssueCount = workflow.VatIssues.Count,
+
                     TaxIssueCount = workflow.TaxIssues.Count,
+
                     VatIssues = workflow.VatIssues,
+
                     TaxIssues = workflow.TaxIssues,
+
                     IsMatched = isMatched,
-                    LineItemCount = lineItems.Count,
+
+                    LineItemCount = lineItemDtos.Count,
+
                     DocumentCount = documentCount,
+
                     StatementOrder = transaction.StatementOrder,
+
+                    CodesSummary = CreateCodesSummary(lineItemDtos),
+
+                    CodesToolTip = CreateCodesToolTip(lineItemDtos),
+
+                    AllocatedTotal = allocatedTotal,
+
+                    RemainingTotal = remainingTotal,
+
+                    LineItems = lineItemDtos,
                 }
             );
         }
@@ -285,48 +339,50 @@ public sealed class TransactionService : ITransactionService
         return new TransactionDetailsDto
         {
             TransactionId = transaction.TransactionId,
+
             ReceiptDate = transaction.ReceiptDate,
+
             PaymentDate = transaction.PaymentDate,
+
             SourceType = transaction.SourceType.ToString(),
+
             DocumentNumber = transaction.DocumentNumber,
+
             BusinessName = transaction.BusinessName,
+
             Description = transaction.Description,
+
             Total = transaction.Total,
             Notes = transaction.Notes,
+
             VatApplicability = transaction.VatApplicability,
+
             VatEntryMethod = transaction.VatEntryMethod,
+
             VATC = transaction.VATC,
             VATS = transaction.VATS,
+
             IsVatClassificationConfirmed = transaction.IsVatClassificationConfirmed,
+
             Status = status.ToString(),
             WorkflowStatus = workflow,
             IsMatched = isMatched,
+
             StatementOrder = transaction.StatementOrder,
 
-            LineItems = lineItems
-                .Select(item =>
-                {
-                    var code = codes.FirstOrDefault(candidate => candidate.CodeId == item.CodeId);
-
-                    return new TransactionLineItemDto
-                    {
-                        TransactionLineItemId = item.TransactionLineItemId,
-                        CodeId = item.CodeId,
-                        Code = code?.Code,
-                        CodeName = code?.Name,
-                        Description = item.Description,
-                        Total = item.Total,
-                    };
-                })
-                .ToList(),
+            LineItems = MapLineItems(lineItems, codes),
 
             Documents = documents
                 .Select(document => new TransactionDocumentDto
                 {
                     TransactionDocumentId = document.TransactionDocumentId,
+
                     FileName = document.FileName,
+
                     MimeType = document.MimeType,
+
                     DocumentType = document.DocumentType,
+
                     UploadedAt = document.UploadedAt,
                 })
                 .ToList(),
@@ -407,27 +463,102 @@ public sealed class TransactionService : ITransactionService
         );
     }
 
+    private static List<TransactionLineItemDto> MapLineItems(
+        IReadOnlyList<TransactionLineItem> lineItems,
+        IReadOnlyList<AccountingCode> codes
+    )
+    {
+        return lineItems
+            .Select(item =>
+            {
+                var code = codes.FirstOrDefault(candidate => candidate.CodeId == item.CodeId);
+
+                return new TransactionLineItemDto
+                {
+                    TransactionLineItemId = item.TransactionLineItemId,
+
+                    CodeId = item.CodeId,
+                    Code = code?.Code,
+                    CodeName = code?.Name,
+
+                    Description = item.Description,
+
+                    Total = item.Total,
+                };
+            })
+            .ToList();
+    }
+
+    private static string CreateCodesSummary(IReadOnlyList<TransactionLineItemDto> lineItems)
+    {
+        if (lineItems.Count == 0)
+            return "Uncoded";
+
+        var values = lineItems
+            .Select(item => string.IsNullOrWhiteSpace(item.Code) ? "Uncoded" : item.Code.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        return values.Count == 0 ? "Uncoded" : string.Join(", ", values);
+    }
+
+    private static string CreateCodesToolTip(IReadOnlyList<TransactionLineItemDto> lineItems)
+    {
+        if (lineItems.Count == 0)
+        {
+            return "No accounting coding lines.";
+        }
+
+        return string.Join(
+            Environment.NewLine,
+            lineItems.Select(item =>
+            {
+                var code = string.IsNullOrWhiteSpace(item.Code) ? "Uncoded" : item.Code;
+
+                var name = string.IsNullOrWhiteSpace(item.CodeName) ? "" : $" — {item.CodeName}";
+
+                return $"{code}{name}: {item.Total:C}";
+            })
+        );
+    }
+
     private static Transaction CopyTransaction(Transaction transaction)
     {
         return new Transaction
         {
             TransactionId = transaction.TransactionId,
+
             ReceiptDate = transaction.ReceiptDate,
+
             PaymentDate = transaction.PaymentDate,
+
             SourceType = transaction.SourceType,
+
             DocumentNumber = transaction.DocumentNumber,
+
             BusinessName = transaction.BusinessName,
+
             Description = transaction.Description,
+
             Total = transaction.Total,
+
             VatApplicability = transaction.VatApplicability,
+
             VatEntryMethod = transaction.VatEntryMethod,
+
             VATC = transaction.VATC,
             VATS = transaction.VATS,
+
             IsVatClassificationConfirmed = transaction.IsVatClassificationConfirmed,
+
             StatementOrder = transaction.StatementOrder,
+
             Notes = transaction.Notes,
+
             CreatedAt = transaction.CreatedAt,
+
             UpdatedAt = transaction.UpdatedAt,
+
             DeletedAt = transaction.DeletedAt,
         };
     }
@@ -435,7 +566,9 @@ public sealed class TransactionService : ITransactionService
     private static bool AreSamePaymentDate(DateTime? first, DateTime? second)
     {
         if (first is null || second is null)
+        {
             return first is null && second is null;
+        }
 
         return first.Value.Date == second.Value.Date;
     }
