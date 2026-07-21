@@ -21,11 +21,11 @@ public sealed class TransactionLineItemRepository
             """
             INSERT INTO TransactionLineItems (
                 TransactionLineItemId, TransactionId, CodeId, Description,
-                Total, CreatedAt, UpdatedAt, DeletedAt
+                Total, StatementOrder, CreatedAt, UpdatedAt, DeletedAt
             )
             VALUES (
                 @TransactionLineItemId, @TransactionId, @CodeId, @Description,
-                @Total, @CreatedAt, @UpdatedAt, @DeletedAt
+                @Total, @StatementOrder, @CreatedAt, @UpdatedAt, @DeletedAt
             );
             """,
             item
@@ -45,13 +45,14 @@ public sealed class TransactionLineItemRepository
                 CodeId,
                 Description,
                 CAST(Total AS REAL) AS Total,
+                StatementOrder,
                 CreatedAt,
                 UpdatedAt,
                 DeletedAt
             FROM TransactionLineItems
             WHERE TransactionId = @transactionId
               AND DeletedAt IS NULL
-            ORDER BY CreatedAt;
+            ORDER BY StatementOrder, CreatedAt;
             """;
 
         var items = await connection.QueryAsync<TransactionLineItem>(sql, new { transactionId });
@@ -86,6 +87,7 @@ public sealed class TransactionLineItemRepository
                 CodeId = @CodeId,
                 Description = @Description,
                 Total = @Total,
+                StatementOrder = @StatementOrder,
                 UpdatedAt = @UpdatedAt
             WHERE TransactionLineItemId = @TransactionLineItemId
               AND DeletedAt IS NULL;

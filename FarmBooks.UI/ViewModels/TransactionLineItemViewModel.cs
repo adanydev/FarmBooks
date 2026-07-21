@@ -9,6 +9,7 @@ public sealed class TransactionLineItemViewModel : ViewModelBase
     private string _accountingCode = "";
     private string _description = "";
     private decimal _amount;
+    private int _statementOrder;
 
     public string TransactionLineItemId
     {
@@ -38,5 +39,11 @@ public sealed class TransactionLineItemViewModel : ViewModelBase
     {
         get => _amount;
         set => SetProperty(ref _amount, value);
+    }
+
+    public int StatementOrder
+    {
+        get => _statementOrder;
+        set => SetProperty(ref _statementOrder, value);
     }
 }

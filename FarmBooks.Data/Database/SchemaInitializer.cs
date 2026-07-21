@@ -30,6 +30,7 @@ public sealed class SchemaInitializer
             await CreateTransactionsTableAsync(connection, transaction);
             await CreateAccountingCodesTableAsync(connection, transaction);
             await CreateTransactionLineItemsTableAsync(connection, transaction);
+            await EnsureTransactionLineItemStatementOrderAsync(connection, transaction);
             await CreateBankAccountsTableAsync(connection, transaction);
             await CreateBankStatementsTableAsync(connection, transaction);
             await CreateBankTransactionsTableAsync(connection, transaction);
@@ -132,6 +133,7 @@ public sealed class SchemaInitializer
                 CodeId TEXT NULL,
                 Description TEXT NULL,
                 Total NUMERIC NOT NULL,
+                StatementOrder INTEGER NOT NULL DEFAULT 0,
                 CreatedAt TEXT NOT NULL,
                 UpdatedAt TEXT NOT NULL,
                 DeletedAt TEXT NULL,
@@ -143,6 +145,42 @@ public sealed class SchemaInitializer
                     REFERENCES AccountingCodes(CodeId)
             );
             """
+        );
+    }
+
+    private async Task EnsureTransactionLineItemStatementOrderAsync(
+        IDbConnection connection,
+        IDbTransaction transaction
+    )
+    {
+        var columns = await connection.QueryAsync<string>(
+            "SELECT name FROM pragma_table_info('TransactionLineItems');",
+            transaction: transaction
+        );
+
+        if (columns.Contains("StatementOrder", StringComparer.OrdinalIgnoreCase))
+            return;
+
+        await connection.ExecuteAsync(
+            "ALTER TABLE TransactionLineItems ADD COLUMN StatementOrder INTEGER NOT NULL DEFAULT 0;",
+            transaction: transaction
+        );
+
+        await connection.ExecuteAsync(
+            """
+            UPDATE TransactionLineItems AS item
+            SET StatementOrder = (
+                SELECT COUNT(*)
+                FROM TransactionLineItems AS preceding
+                WHERE preceding.TransactionId = item.TransactionId
+                  AND (
+                      preceding.CreatedAt < item.CreatedAt
+                      OR (preceding.CreatedAt = item.CreatedAt
+                          AND preceding.TransactionLineItemId <= item.TransactionLineItemId)
+                  )
+            );
+            """,
+            transaction: transaction
         );
     }
 

@@ -8,14 +8,16 @@ public interface ITransactionLineItemService
         string transactionId,
         string? codeId,
         string? description,
-        decimal total
+        decimal total,
+        int statementOrder
     );
 
     Task UpdateLineItemAsync(
         string transactionLineItemId,
         string? codeId,
         string? description,
-        decimal total
+        decimal total,
+        int statementOrder
     );
 
     Task<IReadOnlyList<TransactionLineItem>> ListForTransactionAsync(string transactionId);

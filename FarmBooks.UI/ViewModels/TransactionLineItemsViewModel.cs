@@ -30,6 +30,18 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
             RemoveSelectedLineItem,
             () => SelectedLineItem is not null
         );
+        MoveLineItemUpCommand = new RelayCommand(
+            MoveSelectedLineItemUp,
+            () => GetSelectedLineItemIndex() > 0
+        );
+        MoveLineItemDownCommand = new RelayCommand(
+            MoveSelectedLineItemDown,
+            () =>
+            {
+                var index = GetSelectedLineItemIndex();
+                return index >= 0 && index < LineItems.Count - 1;
+            }
+        );
         LineItems.CollectionChanged += LineItems_CollectionChanged;
         _ = LoadAccountingCodesAsync();
     }
@@ -46,6 +58,7 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
             if (SetProperty(ref _selectedLineItem, value))
             {
                 ((RelayCommand)RemoveLineItemCommand).RaiseCanExecuteChanged();
+                RaiseMoveCanExecuteChanged();
             }
         }
     }
@@ -53,6 +66,10 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
     public ICommand AddLineItemCommand { get; }
 
     public ICommand RemoveLineItemCommand { get; }
+
+    public ICommand MoveLineItemUpCommand { get; }
+
+    public ICommand MoveLineItemDownCommand { get; }
 
     public void Load(IReadOnlyList<TransactionLineItemDto> lineItems)
     {
@@ -69,6 +86,7 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
                     AccountingCode = item.Code ?? item.CodeName ?? "",
                     Description = item.Description ?? "",
                     Amount = item.Total,
+                    StatementOrder = item.StatementOrder,
                 }
             );
         }
@@ -92,8 +110,10 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
 
         _deletedLineItemIds.Clear();
 
-        foreach (var lineItem in LineItems)
+        for (var index = 0; index < LineItems.Count; index++)
         {
+            var lineItem = LineItems[index];
+            lineItem.StatementOrder = index + 1;
             lineItem.CodeId = await ResolveCodeIdAsync(lineItem);
 
             if (string.IsNullOrWhiteSpace(lineItem.TransactionLineItemId))
@@ -102,7 +122,8 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
                     transactionId,
                     NullIfWhiteSpace(lineItem.CodeId),
                     NullIfWhiteSpace(lineItem.Description),
-                    lineItem.Amount
+                    lineItem.Amount,
+                    lineItem.StatementOrder
                 );
             }
             else
@@ -111,7 +132,8 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
                     lineItem.TransactionLineItemId,
                     NullIfWhiteSpace(lineItem.CodeId),
                     NullIfWhiteSpace(lineItem.Description),
-                    lineItem.Amount
+                    lineItem.Amount,
+                    lineItem.StatementOrder
                 );
             }
         }
@@ -184,6 +206,7 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
         }
 
         Changed?.Invoke(this, EventArgs.Empty);
+        RaiseMoveCanExecuteChanged();
     }
 
     private void LineItem_PropertyChanged(object? sender, PropertyChangedEventArgs e)
@@ -219,6 +242,7 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
             AccountingCode = "",
             Description = "",
             Amount = 0m,
+            StatementOrder = LineItems.Count + 1,
         };
 
         LineItems.Add(lineItem);
@@ -237,6 +261,49 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
 
         LineItems.Remove(SelectedLineItem);
         SelectedLineItem = null;
+    }
+
+    private void MoveSelectedLineItemUp()
+    {
+        var index = GetSelectedLineItemIndex();
+
+        if (index <= 0)
+            return;
+
+        LineItems.Move(index, index - 1);
+        UpdateStatementOrders();
+    }
+
+    private void MoveSelectedLineItemDown()
+    {
+        var index = GetSelectedLineItemIndex();
+
+        if (index < 0 || index >= LineItems.Count - 1)
+            return;
+
+        LineItems.Move(index, index + 1);
+        UpdateStatementOrders();
+    }
+
+    private int GetSelectedLineItemIndex()
+    {
+        return SelectedLineItem is null ? -1 : LineItems.IndexOf(SelectedLineItem);
+    }
+
+    private void UpdateStatementOrders()
+    {
+        for (var index = 0; index < LineItems.Count; index++)
+        {
+            LineItems[index].StatementOrder = index + 1;
+        }
+
+        RaiseMoveCanExecuteChanged();
+    }
+
+    private void RaiseMoveCanExecuteChanged()
+    {
+        ((RelayCommand)MoveLineItemUpCommand).RaiseCanExecuteChanged();
+        ((RelayCommand)MoveLineItemDownCommand).RaiseCanExecuteChanged();
     }
 
     private static string? NullIfWhiteSpace(string? value)

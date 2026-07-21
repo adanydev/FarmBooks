@@ -16,7 +16,8 @@ public sealed class TransactionLineItemService : ITransactionLineItemService
         string transactionId,
         string? codeId,
         string? description,
-        decimal total
+        decimal total,
+        int statementOrder
     )
     {
         if (string.IsNullOrWhiteSpace(transactionId))
@@ -38,6 +39,7 @@ public sealed class TransactionLineItemService : ITransactionLineItemService
             CodeId = string.IsNullOrWhiteSpace(codeId) ? null : codeId,
             Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             Total = total,
+            StatementOrder = statementOrder,
             CreatedAt = now,
             UpdatedAt = now,
         };
@@ -63,7 +65,8 @@ public sealed class TransactionLineItemService : ITransactionLineItemService
         string transactionLineItemId,
         string? codeId,
         string? description,
-        decimal total
+        decimal total,
+        int statementOrder
     )
     {
         if (string.IsNullOrWhiteSpace(transactionLineItemId))
@@ -82,6 +85,7 @@ public sealed class TransactionLineItemService : ITransactionLineItemService
             CodeId = string.IsNullOrWhiteSpace(codeId) ? null : codeId,
             Description = string.IsNullOrWhiteSpace(description) ? null : description.Trim(),
             Total = total,
+            StatementOrder = statementOrder,
             UpdatedAt = DateTime.UtcNow,
         };
 

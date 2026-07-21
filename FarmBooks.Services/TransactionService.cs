@@ -484,6 +484,8 @@ public sealed class TransactionService : ITransactionService
                     Description = item.Description,
 
                     Total = item.Total,
+
+                    StatementOrder = item.StatementOrder,
                 };
             })
             .ToList();

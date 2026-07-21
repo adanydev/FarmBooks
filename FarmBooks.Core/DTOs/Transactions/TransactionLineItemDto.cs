@@ -8,4 +8,5 @@ public sealed class TransactionLineItemDto
     public string? CodeName { get; set; }
     public string? Description { get; set; }
     public decimal Total { get; set; }
+    public int StatementOrder { get; set; }
 }

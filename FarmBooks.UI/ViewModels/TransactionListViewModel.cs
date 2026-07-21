@@ -23,6 +23,18 @@ public sealed class TransactionListViewModel : ViewModelBase
         FilteredTransactions = CollectionViewSource.GetDefaultView(Transactions);
 
         FilteredTransactions.Filter = FilterTransaction;
+        FilteredTransactions.SortDescriptions.Add(
+            new SortDescription(
+                nameof(TransactionListRowViewModel.PaymentDate),
+                ListSortDirection.Descending
+            )
+        );
+        FilteredTransactions.SortDescriptions.Add(
+            new SortDescription(
+                nameof(TransactionListRowViewModel.StatementOrder),
+                ListSortDirection.Ascending
+            )
+        );
     }
 
     public ObservableCollection<TransactionListRowViewModel> Transactions { get; } = [];
