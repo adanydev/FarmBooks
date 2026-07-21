@@ -57,6 +57,10 @@
                             <Setter Property="ItemsSource"
                                     Value="{Binding DataContext.AccountingCodes,
                                             RelativeSource={RelativeSource AncestorType=UserControl}}"/>
+                            <Setter Property="IsEditable" Value="True"/>
+                            <Setter Property="Text"
+                                    Value="{Binding AccountingCode,
+                                            UpdateSourceTrigger=LostFocus}"/>
                         </Style>
                     </DataGridComboBoxColumn.EditingElementStyle>
                 </DataGridComboBoxColumn>

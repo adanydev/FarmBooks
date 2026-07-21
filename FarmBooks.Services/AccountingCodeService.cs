@@ -96,39 +96,21 @@ public sealed class AccountingCodeService : IAccountingCodeService
         await _auditService.WriteAsync("AccountingCode", code.CodeId, "Updated", oldCode, code);
     }
 
-    public async Task DisableCodeAsync(string codeId)
+    public async Task DeleteCodeAsync(string codeId)
     {
         var code = await _codes.GetAsync(codeId);
 
         if (code is null)
             throw new InvalidOperationException("Accounting code not found.");
 
-        await _codes.DisableAsync(codeId);
+        await _codes.DeleteAsync(codeId);
 
         await _auditService.WriteAsync(
             "AccountingCode",
             codeId,
-            "Disabled",
+            "Deleted",
             code,
-            new { CodeId = codeId, IsActive = false }
-        );
-    }
-
-    public async Task ReactivateCodeAsync(string codeId)
-    {
-        var code = await _codes.GetAsync(codeId);
-
-        if (code is null)
-            throw new InvalidOperationException("Accounting code not found.");
-
-        await _codes.ReactivateAsync(codeId);
-
-        await _auditService.WriteAsync(
-            "AccountingCode",
-            codeId,
-            "Reactivated",
-            code,
-            new { CodeId = codeId, IsActive = true }
+            null
         );
     }
 }

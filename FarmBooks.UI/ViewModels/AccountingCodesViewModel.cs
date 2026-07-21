@@ -3,21 +3,28 @@ using System.Windows.Input;
 using FarmBooks.Core.Models;
 using FarmBooks.Services;
 using FarmBooks.UI.Infrastructure;
+using FarmBooks.UI.Services;
 
 namespace FarmBooks.UI.ViewModels;
 
 public sealed class AccountingCodesViewModel : ViewModelBase
 {
     private readonly IAccountingCodeService _accountingCodeService;
+    private readonly IConfirmationService _confirmationService;
     private AccountingCodeRowViewModel? _selectedCode;
     private string _message = "";
 
-    public AccountingCodesViewModel(IAccountingCodeService accountingCodeService)
+    public AccountingCodesViewModel(
+        IAccountingCodeService accountingCodeService,
+        IConfirmationService confirmationService
+    )
     {
         _accountingCodeService = accountingCodeService;
+        _confirmationService = confirmationService;
 
         NewCodeCommand = new RelayCommand(AddNewCode);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
+        DeleteCommand = new AsyncRelayCommand(DeleteAsync);
 
         _ = LoadAsync();
     }
@@ -38,6 +45,7 @@ public sealed class AccountingCodesViewModel : ViewModelBase
 
     public ICommand NewCodeCommand { get; }
     public ICommand SaveCommand { get; }
+    public ICommand DeleteCommand { get; }
 
     private async Task LoadAsync()
     {
@@ -109,6 +117,33 @@ public sealed class AccountingCodesViewModel : ViewModelBase
         }
 
         Message = "Saved.";
+    }
+
+    private async Task DeleteAsync()
+    {
+        var code = SelectedCode;
+
+        if (code is null)
+            return;
+
+        if (!string.IsNullOrWhiteSpace(code.CodeId))
+        {
+            var confirmed = _confirmationService.Confirm(
+                $"Delete accounting code '{code.Code}'? Existing line items will be left uncoded.",
+                "Delete Accounting Code"
+            );
+
+            if (!confirmed)
+                return;
+
+            Message = "Deleting...";
+            await _accountingCodeService.DeleteCodeAsync(code.CodeId);
+        }
+
+        var index = Codes.IndexOf(code);
+        Codes.Remove(code);
+        SelectedCode = Codes.Count == 0 ? null : Codes[Math.Min(index, Codes.Count - 1)];
+        Message = "Deleted.";
     }
 
     private static AccountingCodeRowViewModel MapToRow(AccountingCode code)

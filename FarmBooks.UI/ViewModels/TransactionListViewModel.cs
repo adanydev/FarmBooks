@@ -66,22 +66,16 @@ public sealed class TransactionListViewModel : ViewModelBase
 
     public async Task LoadAsync()
     {
-        var expandedIds = Transactions
-            .Where(transaction => transaction.IsExpanded)
-            .Select(transaction => transaction.TransactionId)
-            .ToHashSet();
-
         var transactions = await _transactionService.GetTransactionListAsync();
 
         Transactions.Clear();
 
         foreach (var transaction in transactions)
         {
-            var row = MapToRow(transaction);
-
-            row.IsExpanded = expandedIds.Contains(row.TransactionId);
-
-            Transactions.Add(row);
+            foreach (var row in MapToRows(transaction))
+            {
+                Transactions.Add(row);
+            }
         }
 
         RefreshView();
@@ -121,47 +115,21 @@ public sealed class TransactionListViewModel : ViewModelBase
             return null;
         }
 
-        var transactions = await _transactionService.GetTransactionListAsync();
+        await LoadAsync();
 
-        var refreshedTransaction = transactions.FirstOrDefault(transaction =>
+        return Transactions.FirstOrDefault(transaction =>
             transaction.TransactionId == transactionId
         );
-
-        if (refreshedTransaction is null)
-            return null;
-
-        var refreshedRow = MapToRow(refreshedTransaction);
-
-        var existingRow = Transactions.FirstOrDefault(transaction =>
-            transaction.TransactionId == transactionId
-        );
-
-        if (existingRow is null)
-        {
-            Transactions.Insert(0, refreshedRow);
-
-            RefreshView();
-
-            return refreshedRow;
-        }
-
-        refreshedRow.IsExpanded = existingRow.IsExpanded;
-
-        CopyValues(refreshedRow, existingRow);
-
-        RefreshView();
-
-        return existingRow;
     }
 
     public void RemoveTransaction(string transactionId)
     {
-        var transaction = Transactions.FirstOrDefault(item => item.TransactionId == transactionId);
+        var rows = Transactions.Where(item => item.TransactionId == transactionId).ToList();
 
-        if (transaction is null)
-            return;
-
-        Transactions.Remove(transaction);
+        foreach (var row in rows)
+        {
+            Transactions.Remove(row);
+        }
 
         RefreshView();
     }
@@ -206,7 +174,9 @@ public sealed class TransactionListViewModel : ViewModelBase
         return Contains(transaction.BusinessName, search)
             || Contains(transaction.DocumentNumber, search)
             || Contains(transaction.Description, search)
-            || Contains(transaction.CodesSummary, search);
+            || Contains(transaction.Code, search)
+            || Contains(transaction.CodeName, search)
+            || Contains(transaction.LineItemDescription, search);
     }
 
     private static bool Contains(string? value, string search)
@@ -221,7 +191,26 @@ public sealed class TransactionListViewModel : ViewModelBase
         OnPropertyChanged(nameof(VisibleTransactionCount));
     }
 
-    private static TransactionListRowViewModel MapToRow(TransactionListItemDto transaction)
+    private static IEnumerable<TransactionListRowViewModel> MapToRows(
+        TransactionListItemDto transaction
+    )
+    {
+        if (transaction.LineItems.Count == 0)
+        {
+            yield return MapToRow(transaction, null);
+            yield break;
+        }
+
+        foreach (var lineItem in transaction.LineItems)
+        {
+            yield return MapToRow(transaction, lineItem);
+        }
+    }
+
+    private static TransactionListRowViewModel MapToRow(
+        TransactionListItemDto transaction,
+        TransactionLineItemDto? lineItem
+    )
     {
         return new TransactionListRowViewModel
         {
@@ -267,6 +256,16 @@ public sealed class TransactionListViewModel : ViewModelBase
 
             CodesToolTip = transaction.CodesToolTip,
 
+            TransactionLineItemId = lineItem?.TransactionLineItemId ?? "",
+
+            Code = string.IsNullOrWhiteSpace(lineItem?.Code) ? "Uncoded" : lineItem.Code,
+
+            CodeName = lineItem?.CodeName ?? "",
+
+            LineItemDescription = lineItem?.Description ?? "",
+
+            LineItemTotal = lineItem?.Total ?? 0m,
+
             AllocatedTotal = transaction.AllocatedTotal,
 
             RemainingTotal = transaction.RemainingTotal,
@@ -285,57 +284,4 @@ public sealed class TransactionListViewModel : ViewModelBase
             : string.Join(Environment.NewLine, issues.Select(issue => $"• {issue.Message}"));
     }
 
-    private static void CopyValues(
-        TransactionListRowViewModel source,
-        TransactionListRowViewModel destination
-    )
-    {
-        destination.ReceiptDate = source.ReceiptDate;
-
-        destination.PaymentDate = source.PaymentDate;
-
-        destination.SourceType = source.SourceType;
-
-        destination.DocumentNumber = source.DocumentNumber;
-
-        destination.BusinessName = source.BusinessName;
-
-        destination.Description = source.Description;
-
-        destination.Total = source.Total;
-
-        destination.Status = source.Status;
-
-        destination.Matched = source.Matched;
-
-        destination.LineItemCount = source.LineItemCount;
-
-        destination.DocumentCount = source.DocumentCount;
-
-        destination.StatementOrder = source.StatementOrder;
-
-        destination.IsVatReady = source.IsVatReady;
-
-        destination.IsTaxReady = source.IsTaxReady;
-
-        destination.VatIssueCount = source.VatIssueCount;
-
-        destination.TaxIssueCount = source.TaxIssueCount;
-
-        destination.VatIssuesToolTip = source.VatIssuesToolTip;
-
-        destination.TaxIssuesToolTip = source.TaxIssuesToolTip;
-
-        destination.CodesSummary = source.CodesSummary;
-
-        destination.CodesToolTip = source.CodesToolTip;
-
-        destination.AllocatedTotal = source.AllocatedTotal;
-
-        destination.RemainingTotal = source.RemainingTotal;
-
-        destination.LineItems = source.LineItems;
-
-        destination.IsExpanded = source.IsExpanded;
-    }
 }

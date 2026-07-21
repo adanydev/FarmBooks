@@ -38,6 +38,12 @@ public sealed class TransactionListRowViewModel : ViewModelBase
     private string _codesSummary = "Uncoded";
     private string _codesToolTip = "No accounting coding lines.";
 
+    private string _transactionLineItemId = "";
+    private string _code = "Uncoded";
+    private string _codeName = "";
+    private string _lineItemDescription = "";
+    private decimal _lineItemTotal;
+
     private decimal _allocatedTotal;
     private decimal _remainingTotal;
 
@@ -199,6 +205,36 @@ public sealed class TransactionListRowViewModel : ViewModelBase
     {
         get => _codesToolTip;
         set => SetProperty(ref _codesToolTip, value);
+    }
+
+    public string TransactionLineItemId
+    {
+        get => _transactionLineItemId;
+        set => SetProperty(ref _transactionLineItemId, value);
+    }
+
+    public string Code
+    {
+        get => _code;
+        set => SetProperty(ref _code, value);
+    }
+
+    public string CodeName
+    {
+        get => _codeName;
+        set => SetProperty(ref _codeName, value);
+    }
+
+    public string LineItemDescription
+    {
+        get => _lineItemDescription;
+        set => SetProperty(ref _lineItemDescription, value);
+    }
+
+    public decimal LineItemTotal
+    {
+        get => _lineItemTotal;
+        set => SetProperty(ref _lineItemTotal, value);
     }
 
     public decimal AllocatedTotal

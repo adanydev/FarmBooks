@@ -18,7 +18,5 @@ public interface IAccountingCodeService
         bool isActive
     );
 
-    Task DisableCodeAsync(string codeId);
-
-    Task ReactivateCodeAsync(string codeId);
+    Task DeleteCodeAsync(string codeId);
 }

@@ -27,6 +27,12 @@
                         Margin="0,0,8,0"
                         Command="{Binding NewCodeCommand}"/>
 
+                <Button Content="Delete"
+                        Width="80"
+                        Height="34"
+                        Margin="0,0,8,0"
+                        Command="{Binding DeleteCommand}"/>
+
                 <Button Content="Save"
                         Width="80"
                         Height="34"
@@ -57,9 +63,6 @@
                                     Binding="{Binding Description, UpdateSourceTrigger=PropertyChanged}"
                                     Width="*"/>
 
-                <DataGridCheckBoxColumn Header="Active"
-                                        Binding="{Binding IsActive, UpdateSourceTrigger=PropertyChanged}"
-                                        Width="80"/>
             </DataGrid.Columns>
         </DataGrid>
     </Grid>

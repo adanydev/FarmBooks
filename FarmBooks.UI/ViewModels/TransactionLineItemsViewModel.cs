@@ -94,6 +94,8 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
 
         foreach (var lineItem in LineItems)
         {
+            lineItem.CodeId = await ResolveCodeIdAsync(lineItem);
+
             if (string.IsNullOrWhiteSpace(lineItem.TransactionLineItemId))
             {
                 lineItem.TransactionLineItemId = await _transactionLineItemService.AddLineItemAsync(
@@ -113,6 +115,54 @@ public sealed class TransactionLineItemsViewModel : ViewModelBase
                 );
             }
         }
+    }
+
+    private async Task<string> ResolveCodeIdAsync(TransactionLineItemViewModel lineItem)
+    {
+        var enteredCode = NullIfWhiteSpace(lineItem.AccountingCode);
+
+        if (enteredCode is null)
+        {
+            return "";
+        }
+
+        var selectedCode = AccountingCodes.FirstOrDefault(code => code.CodeId == lineItem.CodeId);
+
+        if (selectedCode is not null && MatchesEnteredCode(selectedCode, enteredCode))
+        {
+            return selectedCode.CodeId;
+        }
+
+        var matchingCode = AccountingCodes.FirstOrDefault(code =>
+            MatchesEnteredCode(code, enteredCode)
+        );
+
+        if (matchingCode is not null)
+        {
+            return matchingCode.CodeId;
+        }
+
+        var codeId = await _accountingCodeService.CreateCodeAsync(enteredCode, enteredCode);
+
+        AccountingCodes.Add(
+            new AccountingCodeOptionViewModel
+            {
+                CodeId = codeId,
+                Code = enteredCode,
+                Name = enteredCode,
+            }
+        );
+
+        return codeId;
+    }
+
+    private static bool MatchesEnteredCode(
+        AccountingCodeOptionViewModel code,
+        string enteredCode
+    )
+    {
+        return string.Equals(code.Code, enteredCode, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(code.DisplayName, enteredCode, StringComparison.OrdinalIgnoreCase);
     }
 
     private void LineItems_CollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)

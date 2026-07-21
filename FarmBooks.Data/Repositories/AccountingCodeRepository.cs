@@ -1,6 +1,7 @@
 using Dapper;
 using FarmBooks.Core.Models;
 using FarmBooks.Data.Database;
+using System.Globalization;
 
 namespace FarmBooks.Data.Repositories;
 
@@ -49,7 +50,7 @@ public sealed class AccountingCodeRepository
         ORDER BY Code;
         """);
 
-        return codes.ToList();
+        return SortByCode(codes).ToList();
     }
 
     public async Task<IReadOnlyList<AccountingCode>> ListAllAsync()
@@ -62,7 +63,12 @@ public sealed class AccountingCodeRepository
         ORDER BY IsActive DESC, Code;
         """);
 
-        return codes.ToList();
+        return codes
+            .OrderByDescending(code => code.IsActive)
+            .ThenBy(code => IsNumericCode(code.Code) ? 0 : 1)
+            .ThenBy(code => GetNumericCode(code.Code))
+            .ThenBy(code => code.Code, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     public async Task UpdateAsync(AccountingCode code)
@@ -82,35 +88,60 @@ public sealed class AccountingCodeRepository
         """, code);
     }
 
-    public async Task DisableAsync(string codeId)
+    public async Task DeleteAsync(string codeId)
     {
         using var connection = _db.CreateConnection();
+        using var transaction = connection.BeginTransaction();
 
-        await connection.ExecuteAsync("""
-        UPDATE AccountingCodes
-        SET IsActive = 0,
-            UpdatedAt = @Now
-        WHERE CodeId = @CodeId;
-        """, new
-        {
-            CodeId = codeId,
-            Now = DateTime.UtcNow
-        });
+        await connection.ExecuteAsync(
+            """
+            UPDATE TransactionLineItems
+            SET CodeId = NULL,
+                UpdatedAt = @Now
+            WHERE CodeId = @CodeId;
+            """,
+            new { CodeId = codeId, Now = DateTime.UtcNow },
+            transaction
+        );
+
+        await connection.ExecuteAsync(
+            "DELETE FROM AccountingCodes WHERE CodeId = @CodeId;",
+            new { CodeId = codeId },
+            transaction
+        );
+
+        transaction.Commit();
     }
 
-    public async Task ReactivateAsync(string codeId)
+    private static IOrderedEnumerable<AccountingCode> SortByCode(
+        IEnumerable<AccountingCode> codes
+    )
     {
-        using var connection = _db.CreateConnection();
+        return codes
+            .OrderBy(code => IsNumericCode(code.Code) ? 0 : 1)
+            .ThenBy(code => GetNumericCode(code.Code))
+            .ThenBy(code => code.Code, StringComparer.OrdinalIgnoreCase);
+    }
 
-        await connection.ExecuteAsync("""
-        UPDATE AccountingCodes
-        SET IsActive = 1,
-            UpdatedAt = @Now
-        WHERE CodeId = @CodeId;
-        """, new
-        {
-            CodeId = codeId,
-            Now = DateTime.UtcNow
-        });
+    private static bool IsNumericCode(string code)
+    {
+        return decimal.TryParse(
+            code,
+            NumberStyles.Number,
+            CultureInfo.InvariantCulture,
+            out _
+        );
+    }
+
+    private static decimal GetNumericCode(string code)
+    {
+        return decimal.TryParse(
+            code,
+            NumberStyles.Number,
+            CultureInfo.InvariantCulture,
+            out var numericCode
+        )
+            ? numericCode
+            : decimal.MaxValue;
     }
 }
